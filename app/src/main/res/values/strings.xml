@@ -1,9 +1,13 @@
 <resources>
     <string name="app_name">App_Museum</string>
     <string name="titleText">Музейный навигатор</string>
-    <string name="btnRegistration">Регистрация</string>
-    <string name="btnExhibit">Поиск экспоната</string>
-    <string name="btnAuthor">Поиск автора</string>
-    <string name="btnMuseum">Поиск по музеям</string>
-    <string name="btnExhibition">Поиск выставок</string>
+    <string name="btnRegistration">Войти</string>
+    <string name="btnExhibit">Экспонаты</string>
+    <string name="btnAuthor">Авторы</string>
+    <string name="btnMuseum">Музеи</string>
+    <string name="btnExhibition">Выставки</string>
+    <string name="btnConfirm">Войти</string>
+    <string name="textRegistration">Вход в систему</string>
+    <string name="hintLogin">Логин</string>
+    <string name="hintPassword">Пароль</string>
 </resources>

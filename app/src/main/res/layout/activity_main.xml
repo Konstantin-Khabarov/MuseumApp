@@ -6,9 +6,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FAFAFA"
-    tools:context=".MainActivity">
+    tools:context=".ui.main.MainActivity">
 
-    <!-- Кнопка регистрации в правом верхнем углу -->
     <Button
         android:id="@+id/btnRegistration"
         android:layout_width="0dp"
@@ -24,7 +23,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <!-- Заголовок приложения -->
     <TextView
         android:id="@+id/titleText"
         android:layout_width="0dp"
@@ -60,6 +58,7 @@
 
         <!-- Кнопка поиска экспоната -->
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardExhibitManagement"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
@@ -97,6 +96,7 @@
 
         <!-- Кнопка поиска автора -->
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardAuthorManagement"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
@@ -134,6 +134,7 @@
 
         <!-- Кнопка информации о музее -->
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardMuseumManagement"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
@@ -171,8 +172,10 @@
 
         <!-- Кнопка информации о выставках -->
         <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardExhibitionManagement"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp"
             app:cardCornerRadius="12dp"
             app:cardElevation="4dp"
             app:cardBackgroundColor="@android:color/white">
@@ -208,4 +211,3 @@
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
-
