@@ -1,9 +1,16 @@
 package com.example.museumapp.data.model
 
-data class Author (
+import com.google.gson.annotations.SerializedName
+
+data class Author(
+    @SerializedName("creator_id")
     val id: Int,
+    @SerializedName("name")
     val name: String,
-    val biography: String? = null,
-    val birthDate: String? = null,
-    val deathDate: String? = null
+    @SerializedName("biography")
+    val biography: String?,
+    @SerializedName("birth_date")
+    val birthDate: String?,
+    @SerializedName("death_date")
+    val deathDate: String?
 )

@@ -7,6 +7,7 @@ sealed class AuthorEvent {
     ) : AuthorEvent()
 
     object ResetSearch : AuthorEvent()
+    object LoadAllAuthors : AuthorEvent()
     object AddAuthor : AuthorEvent()
     object EditAuthor : AuthorEvent()
     object NavigateBack : AuthorEvent()

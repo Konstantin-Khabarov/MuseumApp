@@ -19,6 +19,10 @@ class AuthorViewModel(
     private var currentName = ""
     private var currentAuthorId = ""
 
+    init {
+        loadAllAuthors()
+    }
+
     fun onEvent(event: AuthorEvent) {
         when (event) {
             is AuthorEvent.SearchAuthors -> {
@@ -26,6 +30,9 @@ class AuthorViewModel(
             }
             AuthorEvent.ResetSearch -> {
                 resetSearch()
+            }
+            AuthorEvent.LoadAllAuthors -> {
+                loadAllAuthors()
             }
             AuthorEvent.AddAuthor -> {
                 _uiState.value = AuthorState.NavigateToAddAuthor
@@ -35,6 +42,17 @@ class AuthorViewModel(
             }
             AuthorEvent.NavigateBack -> {
                 _uiState.value = AuthorState.NavigateBack
+            }
+        }
+    }
+
+    private fun loadAllAuthors() {
+        viewModelScope.launch {
+            try {
+                val authors = authorRepository.getAllAuthors()
+                _uiState.value = AuthorState.Success(authors)
+            } catch (e: Exception) {
+                _uiState.value = AuthorState.Error("Ошибка загрузки: ${e.message}")
             }
         }
     }
@@ -66,9 +84,20 @@ class AuthorViewModel(
     private fun resetSearch() {
         currentName = ""
         currentAuthorId = ""
-        _uiState.value = AuthorState.ShowMessage("Поля поиска очищены")
-        _uiState.value = AuthorState.Idle
+        loadAllAuthors()
     }
+
+    /*fun deleteAuthor(id: Int) {
+        viewModelScope.launch {
+            try {
+                authorRepository.deleteAuthor(id)
+                // Обновить список, если нужно
+                loadAllAuthors() // например, перезагрузить
+            } catch (e: Exception) {
+                _uiState.value = AuthorState.Error("Ошибка удаления: ${e.message}")
+            }
+        }
+    }*/
 
     fun getCurrentSearchValues(): Pair<String, String> {
         return Pair(currentAuthorId, currentName)

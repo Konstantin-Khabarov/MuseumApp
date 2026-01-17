@@ -1,10 +1,12 @@
 package com.example.museumapp.ui.authors
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.museumapp.MuseumApp
 import com.example.museumapp.data.model.Author
 import com.example.museumapp.databinding.ActivityAuthorManagementBinding
@@ -13,6 +15,7 @@ import kotlinx.coroutines.launch
 class AuthorManagementActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityAuthorManagementBinding
+    private lateinit var authorAdapter: AuthorAdapter
 
     private val viewModel: AuthorViewModel by viewModels {
         AuthorViewModelFactory((application as MuseumApp).authorRepository)
@@ -24,6 +27,7 @@ class AuthorManagementActivity : AppCompatActivity() {
         binding = ActivityAuthorManagementBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        setupRecyclerView()
         setupUI()
         setupObservers()
         setupListeners()
@@ -34,6 +38,22 @@ class AuthorManagementActivity : AppCompatActivity() {
         val (authorId, name) = viewModel.getCurrentSearchValues()
         binding.editTextAuthorId.setText(authorId)
         binding.editTextAuthorName.setText(name)
+    }
+
+    private fun setupRecyclerView() {
+        authorAdapter = AuthorAdapter { author ->
+            // Передаём автора в новый экран
+            val intent = Intent(this, AuthorDetailActivity::class.java).apply {
+                putExtra("author_id", author.id)
+                putExtra("author_name", author.name)
+                putExtra("author_bio", author.biography)
+                putExtra("author_birth_date", author.birthDate)
+                putExtra("author_death_date", author.deathDate)
+            }
+            startActivity(intent)
+        }
+        binding.recyclerViewAuthors.adapter = authorAdapter
+        binding.recyclerViewAuthors.layoutManager = LinearLayoutManager(this)
     }
 
     private fun setupObservers() {
@@ -101,21 +121,8 @@ class AuthorManagementActivity : AppCompatActivity() {
     }
 
     private fun showSearchResults(authors: List<Author>) {
-        // Временная реализация - показываем в Toast
-        // Позже заменить на RecyclerView
-        val message = buildString {
-            append("Найдено авторов: ${authors.size}\n")
-            authors.take(3).forEachIndexed { index, author ->
-                append("${index + 1}. ${author.name}\n")
-            }
-            if (authors.size > 3) {
-                append("... и ещё ${authors.size - 3}")
-            }
-        }
+        authorAdapter.submitList(authors)
 
-        showToast(message)
-
-        // binding.recyclerViewAuthors.adapter = AuthorAdapter(authors)
     }
 
     private fun navigateToAddAuthor() {

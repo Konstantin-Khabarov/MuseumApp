@@ -56,4 +56,6 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.navigation.ui.ktx)
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
 }
