@@ -15,14 +15,21 @@ class ExhibitViewModel(
     private val _uiState = MutableStateFlow<ExhibitState>(ExhibitState.Idle)
     val uiState: StateFlow<ExhibitState> = _uiState.asStateFlow()
 
-    // Текущие значения поиска
+    // Текущие значения поиска (обновлено для трех параметров)
     private var currentTitle = ""
-    private var currentExhibitId = ""
+    private var currentAuthorName = ""
+    private var currentMuseumName = ""
 
     fun onEvent(event: ExhibitEvent) {
         when (event) {
             is ExhibitEvent.SearchExhibits -> {
-                searchExhibits(event.title, event.exhibitId)
+                // Сохраняем текущие значения
+                currentTitle = event.title
+                currentAuthorName = event.authorName
+                currentMuseumName = event.museumName
+
+                // Вызываем поиск с тремя параметрами
+                searchExhibits(event.title, event.authorName, event.museumName)
             }
             ExhibitEvent.ResetSearch -> {
                 resetSearch()
@@ -36,22 +43,23 @@ class ExhibitViewModel(
         }
     }
 
-    private fun searchExhibits(title: String, exhibitId: String) {
-        currentTitle = title
-        currentExhibitId = exhibitId
-
+    private fun searchExhibits(
+        title: String = "",
+        authorName: String = "",
+        museumName: String = ""
+    ) {
         viewModelScope.launch {
             try {
-                val id = exhibitId.toIntOrNull()
                 val exhibits = exhibitRepository.searchExhibits(
                     title = title.ifEmpty { null },
-                    exhibitId = id
+                    authorName = authorName.ifEmpty { null },
+                    museumName = museumName.ifEmpty { null }
                 )
 
-                if (exhibits.isEmpty()) {
-                    _uiState.value = ExhibitState.ShowMessage("Экспонаты не найдены")
+                _uiState.value = if (exhibits.isEmpty()) {
+                    ExhibitState.ShowMessage("Экспонаты не найдены")
                 } else {
-                    _uiState.value = ExhibitState.Success(exhibits)
+                    ExhibitState.Success(exhibits)
                 }
             } catch (e: Exception) {
                 _uiState.value = ExhibitState.Error("Ошибка поиска: ${e.message}")
@@ -60,13 +68,16 @@ class ExhibitViewModel(
     }
 
     private fun resetSearch() {
+        // Сбрасываем все три поля
         currentTitle = ""
-        currentExhibitId = ""
+        currentAuthorName = ""
+        currentMuseumName = ""
         _uiState.value = ExhibitState.ShowMessage("Поля поиска очищены")
         _uiState.value = ExhibitState.Idle
     }
 
-    fun getCurrentSearchValues(): Pair<String, String> {
-        return Pair(currentTitle, currentExhibitId)
+    // Обновлено для возврата трех значений
+    fun getCurrentSearchValues(): Triple<String, String, String> {
+        return Triple(currentTitle, currentAuthorName, currentMuseumName)
     }
 }

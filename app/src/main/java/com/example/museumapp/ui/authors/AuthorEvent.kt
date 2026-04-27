@@ -2,8 +2,7 @@ package com.example.museumapp.ui.authors
 
 sealed class AuthorEvent {
     data class SearchAuthors(
-        val name: String,
-        val authorId: String
+        val name: String
     ) : AuthorEvent()
 
     object ResetSearch : AuthorEvent()

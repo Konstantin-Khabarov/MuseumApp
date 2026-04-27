@@ -58,12 +58,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:padding="16dp">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="10dp"
                 android:text="Поиск экспонатов"
                 android:textColor="#2D3436"
                 android:textSize="20sp"
@@ -72,7 +72,7 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="10dp"
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -86,15 +86,28 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
+                android:layout_marginBottom="10dp"
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/editTextExhibitId"
+                    android:id="@+id/editTextAuthorName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="ID экспоната"
-                    android:inputType="number" />
+                    android:hint="Имя автора" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editTextMuseumName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Музей" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -151,11 +164,22 @@
         android:textSize="20sp"
         android:textStyle="bold" />
 
-    <!-- Место для показа экспонатов (заглушка) -->
-    <com.google.android.material.card.MaterialCardView
+    <!-- RecyclerView для списка экспонатов -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewExhibits"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
+        android:visibility="gone"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+
+    <!-- Заглушка для пустого состояния -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardPlaceholder"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:visibility="visible"
         app:cardCornerRadius="12dp"
         app:cardElevation="2dp">
 
@@ -172,7 +196,8 @@
                 android:gravity="center"
                 android:text="Здесь будут отображаться найденные экспонаты"
                 android:textColor="#757575"
-                android:textSize="16sp" />
+                android:textSize="16sp"
+                android:lineSpacingMultiplier="1.2" />
 
         </LinearLayout>
 

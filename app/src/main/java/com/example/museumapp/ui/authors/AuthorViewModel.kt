@@ -17,7 +17,6 @@ class AuthorViewModel(
 
     // Поля поиска для сохранения состояния
     private var currentName = ""
-    private var currentAuthorId = ""
 
     init {
         loadAllAuthors()
@@ -26,7 +25,7 @@ class AuthorViewModel(
     fun onEvent(event: AuthorEvent) {
         when (event) {
             is AuthorEvent.SearchAuthors -> {
-                searchAuthors(event.name, event.authorId)
+                searchAuthors(event.name)
             }
             AuthorEvent.ResetSearch -> {
                 resetSearch()
@@ -57,17 +56,14 @@ class AuthorViewModel(
         }
     }
 
-    private fun searchAuthors(name: String, authorId: String) {
+    private fun searchAuthors(name: String) {
         // Сохраняем текущие значения
         currentName = name
-        currentAuthorId = authorId
 
         viewModelScope.launch {
             try {
-                val id = authorId.toIntOrNull()
                 val authors = authorRepository.searchAuthors(
                     name = name.ifEmpty { null },
-                    authorId = id
                 )
 
                 if (authors.isEmpty()) {
@@ -83,7 +79,6 @@ class AuthorViewModel(
 
     private fun resetSearch() {
         currentName = ""
-        currentAuthorId = ""
         loadAllAuthors()
     }
 
@@ -99,7 +94,7 @@ class AuthorViewModel(
         }
     }*/
 
-    fun getCurrentSearchValues(): Pair<String, String> {
-        return Pair(currentAuthorId, currentName)
+    fun getCurrentSearchValues(): String {
+        return currentName
     }
 }

@@ -1,80 +1,125 @@
 package com.example.museumapp.data.repository
 
 import com.example.museumapp.data.model.Exhibit
+import com.example.museumapp.data.model.Author
+import com.example.museumapp.data.model.Museum
 
 class ExhibitRepository {
+    private val api = SupabaseClient.apiService
 
-    private val mockExhibits = listOf(
-        Exhibit(
-            id = 1,
-            title = "Мона Лиза",
-            description = "Знаменитая картина Леонардо да Винчи",
-            creationDate = "1503-1506",
-            authorId = 1,
-            museumId = 1,
-            location = "Зал 1"
-        ),
-        Exhibit(
-            id = 2,
-            title = "Звездная ночь",
-            description = "Картина Винсента ван Гога",
-            creationDate = "1889",
-            authorId = 2,
-            museumId = 1,
-            location = "Зал 2"
-        ),
-        Exhibit(
-            id = 3,
-            title = "Герника",
-            description = "Картина Пабло Пикассо",
-            creationDate = "1937",
-            authorId = 3,
-            museumId = 2,
-            location = "Зал 3"
-        ),
-        Exhibit(
-            id = 4,
-            title = "Крик",
-            description = "Картина Эдварда Мунка",
-            creationDate = "1893",
-            authorId = 4,
-            museumId = 2,
-            location = "Зал 4"
-        ),
-        Exhibit(
-            id = 5,
-            title = "Подсолнухи",
-            description = "Серия картин Винсента ван Гога",
-            creationDate = "1888",
-            authorId = 2,
-            museumId = 1,
-            location = "Зал 5"
+    // Получение всех экспонатов
+    suspend fun getAllExhibits(): List<Exhibit> {
+        val headers = SupabaseClient.getHeaders()
+        val response = api.getAllExhibits(
+            apiKey = headers["apikey"]!!,
+            token = headers["Authorization"]!!
         )
-    )
+        println("DEBUG: Supabase response = $response")
+        return response
+    }
 
+    // Поиск экспонатов по различным критериям
     suspend fun searchExhibits(
         title: String? = null,
-        exhibitId: Int? = null,
-        authorId: Int? = null,
-        museumId: Int? = null
+        authorName: String? = null,
+        museumName: String? = null
     ): List<Exhibit> {
-        return mockExhibits.filter { exhibit ->
-            (title.isNullOrEmpty() || exhibit.title.contains(title, ignoreCase = true)) &&
-                    (exhibitId == null || exhibit.id == exhibitId) &&
-                    (authorId == null || exhibit.authorId == authorId) &&
-                    (museumId == null || exhibit.museumId == museumId)
+        val allExhibits = getAllExhibits()
+
+        // Если нет критериев поиска, возвращаем все экспонаты
+        if (title.isNullOrEmpty() && authorName.isNullOrEmpty() && museumName.isNullOrEmpty()) {
+            return allExhibits
+        }
+
+        // Получаем всех авторов и музеи для поиска по именам
+        val authors = getAllAuthors()
+        val museums = getAllMuseums()
+
+        return allExhibits.filter { exhibit ->
+            var matches = true
+
+            // Поиск по названию экспоната
+            if (!title.isNullOrEmpty()) {
+                matches = matches && exhibit.title.contains(title, ignoreCase = true)
+            }
+
+            // Поиск по имени автора
+            if (!authorName.isNullOrEmpty()) {
+                val author = authors.find { it.id == exhibit.authorId }
+                val authorMatches = author?.name?.contains(authorName, ignoreCase = true) ?: false
+                matches = matches && authorMatches
+            }
+
+            // Поиск по названию музея
+            if (!museumName.isNullOrEmpty()) {
+                val museum = museums.find { it.id == exhibit.museumId }
+                val museumMatches = museum?.name?.contains(museumName, ignoreCase = true) ?: false
+                matches = matches && museumMatches
+            }
+
+            matches
         }
     }
 
-    suspend fun addExhibit(exhibit: Exhibit) {
-        // Логика добавления экспоната
+    // Поиск экспонатов по ID автора
+    suspend fun getExhibitsByAuthorId(authorId: Int): List<Exhibit> {
+        val allExhibits = getAllExhibits()
+        return allExhibits.filter { it.authorId == authorId }
     }
 
-    suspend fun updateExhibit(exhibit: Exhibit) {
-        // Логика обновления экспоната
+    // Поиск экспонатов по ID музея
+    suspend fun getExhibitsByMuseumId(museumId: Int): List<Exhibit> {
+        val allExhibits = getAllExhibits()
+        return allExhibits.filter { it.museumId == museumId }
     }
 
-    suspend fun deleteExhibit(exhibitId: Int) {
-        // Логика удаления экспоната
+    // Добавление нового экспоната
+    suspend fun insertExhibit(exhibit: Exhibit): List<Exhibit> {
+        val headers = SupabaseClient.getHeaders()
+        return api.insertExhibit(
+            apiKey = headers["apikey"]!!,
+            token = headers["Authorization"]!!,
+            exhibit = exhibit
+        )
+    }
+
+    // Обновление экспоната
+    suspend fun updateExhibit(id: Int, exhibit: Exhibit): List<Exhibit> {
+        val headers = SupabaseClient.getHeaders()
+        return api.updateExhibit(
+            id = id,
+            apiKey = headers["apikey"]!!,
+            token = headers["Authorization"]!!,
+            exhibit = exhibit
+        )
+    }
+
+    // Удаление экспоната
+    suspend fun deleteExhibit(id: Int) {
+        val headers = SupabaseClient.getHeaders()
+        api.deleteExhibit(
+            id = id,
+            apiKey = headers["apikey"]!!,
+            token = headers["Authorization"]!!
+        )
+    }
+
+    // Вспомогательные методы для получения авторов и музеев
+    private suspend fun getAllAuthors(): List<Author> {
+        val headers = SupabaseClient.getHeaders()
+        val response = api.getAllCreators(
+            apiKey = headers["apikey"]!!,
+            token = headers["Authorization"]!!
+        )
+        return response
+    }
+
+    private suspend fun getAllMuseums(): List<Museum> {
+        val headers = SupabaseClient.getHeaders()
+        val response = api.getAllMuseums(
+            apiKey = headers["apikey"]!!,
+            token = headers["Authorization"]!!
+        )
+        return response
     }
 }

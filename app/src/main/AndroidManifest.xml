@@ -38,6 +38,9 @@
         <activity
             android:name=".ui.authors.AuthorDetailActivity"
             android:exported="false" />
+        <activity
+            android:name=".ui.exhibits.ExhibitDetailActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

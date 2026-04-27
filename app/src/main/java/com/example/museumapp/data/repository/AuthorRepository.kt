@@ -3,7 +3,6 @@ package com.example.museumapp.data.repository
 import com.example.museumapp.data.model.Author
 import kotlinx.coroutines.delay
 
-// Временный репозиторий, позже заменим на реальный с Room/SQLite
 class AuthorRepository {
     private val api = SupabaseClient.apiService
 
@@ -15,14 +14,12 @@ class AuthorRepository {
     }
 
     suspend fun searchAuthors(
-        name: String? = null,
-        authorId: Int? = null
+        name: String? = null
     ): List<Author> {
         val allAuthors = getAllAuthors()
         // Фильтруем локально
         return allAuthors.filter { author ->
-            ((name.isNullOrEmpty() || author.name.contains(name, ignoreCase = true)) &&
-                    (authorId == null || author.id == authorId))
+            (name.isNullOrEmpty() || author.name.contains(name, ignoreCase = true))
         }
     }
 

@@ -28,8 +28,6 @@ class AuthorAdapter(
 
         fun bind(author: Author) {
             binding.textAuthorName.text = author.name
-            binding.textAuthorId.text = "ID: ${author.id}"
-
             binding.root.setOnClickListener {
                 onItemClick(author)
             }

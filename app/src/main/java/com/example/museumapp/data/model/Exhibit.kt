@@ -7,6 +7,5 @@ data class Exhibit(
     val creationDate: String,
     val authorId: Int? = null,
     val museumId: Int? = null,
-    val location: String? = null,
     val imageUrl: String? = null
 )

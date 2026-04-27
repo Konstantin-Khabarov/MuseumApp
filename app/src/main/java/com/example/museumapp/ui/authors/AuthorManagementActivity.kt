@@ -35,8 +35,7 @@ class AuthorManagementActivity : AppCompatActivity() {
 
     private fun setupUI() {
         // Восстановление предыдущих значений поиска (если есть)
-        val (authorId, name) = viewModel.getCurrentSearchValues()
-        binding.editTextAuthorId.setText(authorId)
+        val name = viewModel.getCurrentSearchValues()
         binding.editTextAuthorName.setText(name)
     }
 
@@ -97,16 +96,13 @@ class AuthorManagementActivity : AppCompatActivity() {
 
         binding.btnSearch.setOnClickListener {
             val name = binding.editTextAuthorName.text.toString()
-            val authorId = binding.editTextAuthorId.text.toString()
-
             viewModel.onEvent(
-                AuthorEvent.SearchAuthors(name, authorId)
+                AuthorEvent.SearchAuthors(name)
             )
         }
 
         binding.btnReset.setOnClickListener {
             binding.editTextAuthorName.setText("")
-            binding.editTextAuthorId.setText("")
             viewModel.onEvent(AuthorEvent.ResetSearch)
         }
 
