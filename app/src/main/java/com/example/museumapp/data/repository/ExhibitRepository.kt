@@ -7,15 +7,33 @@ import com.example.museumapp.data.model.Museum
 class ExhibitRepository {
     private val api = SupabaseClient.apiService
 
-    // Получение всех экспонатов
+    // Получение всех экспонатов с поддержкой пагинации
     suspend fun getAllExhibits(): List<Exhibit> {
         val headers = SupabaseClient.getHeaders()
-        val response = api.getAllExhibits(
-            apiKey = headers["apikey"]!!,
-            token = headers["Authorization"]!!
-        )
-        println("DEBUG: Supabase response = $response")
-        return response
+        // Используем пагинацию для загрузки больших объемов данных
+        val batchSize = 500 // Загружаем по 500 записей за раз
+        var offset = 0
+        val allExhibits = mutableListOf<Exhibit>()
+        
+        while (true) {
+            val rangeHeader = "$offset-${offset + batchSize - 1}"
+            val response = api.getAllExhibitsWithPagination(
+                apiKey = headers["apikey"]!!,
+                token = headers["Authorization"]!!,
+                range = rangeHeader
+            )
+            
+            if (response.isEmpty()) break
+            
+            allExhibits.addAll(response)
+            offset += batchSize
+            
+            // Если получили меньше чем batchSize, значит это последняя страница
+            if (response.size < batchSize) break
+        }
+        
+        println("DEBUG: Loaded ${allExhibits.size} exhibits total")
+        return allExhibits
     }
 
     // Поиск экспонатов по различным критериям

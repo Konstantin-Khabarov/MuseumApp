@@ -1,106 +1,66 @@
-# Compiled files
+```
+# Compiled and build artifacts
 *.class
-*.dex
-*.apk
-*.aab
-*.jar
+*.o
+*.obj
+*.out
+build/
+target/
 
-# Gradle files
+# Dependencies
 .gradle/
-build/
-*/build/
-gradle-app.setting
+node_modules/
+venv/
+.venv/
+__pycache__/
+.mypy_cache/
+.pytest_cache/
 
-# Local configuration file (sdk path, etc)
-local.properties
-
-# Logs
-*.log
-
-# Android Studio generated files and folders
+# Editors
+.vscode/
 .idea/
-.idea/caches/
-.idea/libraries/
-.idea/workspace.xml
-.idea/tasks.xml
-.idea/vcs.xml
-.idea/gradle.xml
-.idea/assetWizardSettings.xml
-.idea/dictionaries
-.idea/jarRepositories.xml
-.idea/navEditor.xml
-.idea/compiler.xml
-.idea/modules.xml
-*.iml
-*.iws
-*.ipr
-out/
-captures/
-
-# Keystore files
-*.jks
-*.keystore
-
-# Gradle wrapper
-/gradle/wrapper/gradle-wrapper.jar
-/gradle/wrapper/gradle-wrapper.properties
-
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
 *.swp
+*.swo
 
-# Android Studio
-.idea/caches/build_file_checksums.ser
-.idea/modules.xml
-.idea/workspace.xml
+# Logs and temp files
+*.log
+*.tmp
 
-# Navigation editor
-.navigation/
+# Environment
+.env
+.env.local
+*.env.*
 
-# User-specific configurations
-.idea/caches/
-.idea/libraries/
-.idea/shelf/
-.idea/.name
-.idea/compiler.xml
-.idea/copyright/profiles_settings.xml
-.idea/encodings.xml
-.idea/misc.xml
-.idea/scopes/scope_settings.xml
-.idea/vcs.xml
-.idea/jsLibraryMappings.xml
-.idea/datasources.xml
-.idea/dataSources.ids
-.idea/dataSources.xml
-.idea/sqlDataSources.xml
-.idea/dynamic.xml
-.idea/uiDesigner.xml
-.idea/assetWizardSettings.xml
-.idea/gradle.xml
-.idea/jarRepositories.xml
-.idea/navEditor.xml
+# System files
+.DS_Store
+Thumbs.db
 
-# Crashlytics
-com_crashlytics_export_strings.xml
-crashlytics.properties
-crashlytics-build.properties
-fabric.properties
+# Coverage reports
+coverage/
+htmlcov/
+.coverage
 
-# Google Services
-google-services.json
-
-# Testing
-*.test
-
-# Build outputs
-build/
-app/build/
-captures/
-.externalNativeBuild
-.cxx
+# Compressed files
+*.zip
+*.gz
+*.tar
+*.tgz
+*.bz2
+*.xz
+*.7z
+*.rar
+*.zst
+*.lz4
+*.lzh
+*.cab
+*.arj
+*.rpm
+*.deb
+*.Z
+*.lz
+*.lzo
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
+```

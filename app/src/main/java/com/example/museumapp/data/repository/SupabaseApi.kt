@@ -45,11 +45,20 @@ interface SupabaseApi {
     ): Response<Unit>
 
     // EXHIBITS
-    @GET("rest/v1/exhibit?select=*")
+    @GET("rest/v1/exhibit")
     suspend fun getAllExhibits(
         @Header("apikey") apiKey: String,
         @Header("Authorization") token: String
     ): List<Exhibit>
+    
+    // Получение экспонатов с пагинацией (для больших объемов данных)
+    @GET("rest/v1/exhibit")
+    suspend fun getAllExhibitsWithPagination(
+        @Header("apikey") apiKey: String,
+        @Header("Authorization") token: String,
+        @Header("Range") range: String
+    ): List<Exhibit>
+    
     @POST("rest/v1/exhibit")
     suspend fun insertExhibit(
         @Header("apikey") apiKey: String,
