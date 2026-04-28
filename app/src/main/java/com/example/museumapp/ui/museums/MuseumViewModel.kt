@@ -3,6 +3,7 @@ package com.example.museumapp.ui.museums
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.museumapp.data.repository.MuseumRepository
+import com.example.museumapp.ui.authors.AuthorState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,16 +18,22 @@ class MuseumViewModel(
 
     // Текущие значения поиска
     private var currentName = ""
-    private var currentMuseumId = ""
-    private var currentCountry = ""
+    private var currentCity = ""
+
+    init {
+        loadAllMuseums()
+    }
 
     fun onEvent(event: MuseumEvent) {
         when (event) {
             is MuseumEvent.SearchMuseums -> {
-                searchMuseums(event.name, event.museumId, event.country)
+                searchMuseums(event.name, event.city)
             }
             MuseumEvent.ResetSearch -> {
                 resetSearch()
+            }
+            MuseumEvent.LoadAllMuseums -> {
+                loadAllMuseums()
             }
             MuseumEvent.AddMuseum -> {
                 _uiState.value = MuseumState.NavigateToAddMuseum
@@ -40,18 +47,26 @@ class MuseumViewModel(
         }
     }
 
-    private fun searchMuseums(name: String, museumId: String, country: String) {
+    private fun loadAllMuseums() {
+        viewModelScope.launch {
+            try {
+                val museums = museumRepository.getAllMuseums()
+                _uiState.value = MuseumState.Success(museums)
+            } catch (e: Exception) {
+                _uiState.value = MuseumState.Error("Ошибка загрузки: ${e.message}")
+            }
+        }
+    }
+
+    private fun searchMuseums(name: String, city: String) {
         currentName = name
-        currentMuseumId = museumId
-        currentCountry = country
+        currentCity = city
 
         viewModelScope.launch {
             try {
-                val id = museumId.toIntOrNull()
                 val museums = museumRepository.searchMuseums(
                     name = name.ifEmpty { null },
-                    museumId = id,
-                    country = country.ifEmpty { null }
+                    city = city.ifEmpty { null }
                 )
 
                 if (museums.isEmpty()) {
@@ -67,13 +82,12 @@ class MuseumViewModel(
 
     private fun resetSearch() {
         currentName = ""
-        currentMuseumId = ""
-        currentCountry = ""
+        currentCity = ""
         _uiState.value = MuseumState.ShowMessage("Поля поиска очищены")
         _uiState.value = MuseumState.Idle
     }
 
-    fun getCurrentSearchValues(): Triple<String, String, String> {
-        return Triple(currentName, currentMuseumId, currentCountry)
+    fun getCurrentSearchValues(): Pair<String, String> {
+        return Pair(currentName, currentCity)
     }
 }

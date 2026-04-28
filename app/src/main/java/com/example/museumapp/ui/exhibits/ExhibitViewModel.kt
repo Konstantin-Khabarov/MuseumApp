@@ -3,6 +3,7 @@ package com.example.museumapp.ui.exhibits
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.museumapp.data.repository.ExhibitRepository
+import com.example.museumapp.ui.museums.MuseumState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,14 +21,13 @@ class ExhibitViewModel(
     private var currentAuthorName = ""
     private var currentMuseumName = ""
 
+    init {
+        loadAllExhibits()
+    }
+
     fun onEvent(event: ExhibitEvent) {
         when (event) {
             is ExhibitEvent.SearchExhibits -> {
-                // Сохраняем текущие значения
-                currentTitle = event.title
-                currentAuthorName = event.authorName
-                currentMuseumName = event.museumName
-
                 // Вызываем поиск с тремя параметрами
                 searchExhibits(event.title, event.authorName, event.museumName)
             }
@@ -43,11 +43,22 @@ class ExhibitViewModel(
         }
     }
 
-    private fun searchExhibits(
-        title: String = "",
-        authorName: String = "",
-        museumName: String = ""
-    ) {
+    private fun loadAllExhibits() {
+        viewModelScope.launch {
+            try {
+                val exhibits = exhibitRepository.getAllExhibits()
+                _uiState.value = ExhibitState.Success(exhibits)
+            } catch (e: Exception) {
+                _uiState.value = ExhibitState.Error("Ошибка загрузки: ${e.message}")
+            }
+        }
+    }
+
+    private fun searchExhibits(title: String, authorName: String, museumName: String) {
+        currentTitle = title
+        currentAuthorName = authorName
+        currentMuseumName = museumName
+
         viewModelScope.launch {
             try {
                 val exhibits = exhibitRepository.searchExhibits(

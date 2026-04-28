@@ -1,17 +1,23 @@
 package com.example.museumapp.ui.museums
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.museumapp.MuseumApp
+import com.example.museumapp.data.model.Museum
 import com.example.museumapp.databinding.ActivityMuseumManagementBinding
+import com.example.museumapp.ui.museums.MuseumAdapter
+import com.example.museumapp.ui.museums.MuseumDetailActivity
 import kotlinx.coroutines.launch
 
 class MuseumManagementActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMuseumManagementBinding
+    private lateinit var museumAdapter: MuseumAdapter
     private val viewModel: MuseumViewModel by viewModels {
         MuseumViewModelFactory((application as MuseumApp).museumRepository)
     }
@@ -22,6 +28,7 @@ class MuseumManagementActivity : AppCompatActivity() {
         binding = ActivityMuseumManagementBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        setupRecyclerView()
         setupUI()
         setupObservers()
         setupListeners()
@@ -29,12 +36,25 @@ class MuseumManagementActivity : AppCompatActivity() {
 
     private fun setupUI() {
         // Восстановление предыдущих значений поиска
-        val (name, museumId, country) = viewModel.getCurrentSearchValues()
+        val (name, city) = viewModel.getCurrentSearchValues()
         binding.editTextMuseumName.setText(name)
-        binding.editTextMuseumId.setText(museumId)
-        binding.editTextMuseumCountry.setText(country)
+        binding.editTextMuseumCity.setText(city)
     }
 
+
+    private fun setupRecyclerView() {
+        museumAdapter = MuseumAdapter { museum ->
+            val intent = Intent(this, MuseumDetailActivity::class.java).apply {
+                putExtra("museum_id", museum.id)
+                putExtra("museum_name", museum.name)
+                putExtra("museum_city", museum.city)
+                putExtra("museum_address", museum.address)
+            }
+            startActivity(intent)
+        }
+        binding.recyclerViewMuseums.adapter = museumAdapter
+        binding.recyclerViewMuseums.layoutManager = LinearLayoutManager(this)
+    }
     private fun setupObservers() {
         lifecycleScope.launch {
             viewModel.uiState.collect { state ->
@@ -76,18 +96,16 @@ class MuseumManagementActivity : AppCompatActivity() {
 
         binding.btnSearch.setOnClickListener {
             val name = binding.editTextMuseumName.text.toString()
-            val museumId = binding.editTextMuseumId.text.toString()
-            val country = binding.editTextMuseumCountry.text.toString()
+            val city = binding.editTextMuseumCity.text.toString()
 
             viewModel.onEvent(
-                MuseumEvent.SearchMuseums(name, museumId, country)
+                MuseumEvent.SearchMuseums(name, city)
             )
         }
 
         binding.btnReset.setOnClickListener {
             binding.editTextMuseumName.setText("")
-            binding.editTextMuseumId.setText("")
-            binding.editTextMuseumCountry.setText("")
+            binding.editTextMuseumCity.setText("")
             viewModel.onEvent(MuseumEvent.ResetSearch)
         }
 
@@ -102,20 +120,8 @@ class MuseumManagementActivity : AppCompatActivity() {
         }*/
     }
 
-    private fun showSearchResults(museums: List<com.example.museumapp.data.model.Museum>) {
-        val message = buildString {
-            append("Найдено музеев: ${museums.size}\n")
-            museums.take(3).forEachIndexed { index, museum ->
-                append("${index + 1}. ${museum.name} (${museum.country})\n")
-            }
-            if (museums.size > 3) {
-                append("... и ещё ${museums.size - 3}")
-            }
-        }
-
-        showToast(message)
-
-        // binding.recyclerViewMuseums.adapter = MuseumAdapter(museums)
+    private fun showSearchResults(museums: List<Museum>) {
+        museumAdapter.submitList(museums)
     }
 
     private fun navigateToAddMuseum() {

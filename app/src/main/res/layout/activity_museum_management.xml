@@ -90,26 +90,10 @@
                 style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
 
                 <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/editTextMuseumCountry"
+                    android:id="@+id/editTextMuseumCity"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Страна" />
-
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- Поле для ID музея -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/editTextMuseumId"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="ID музея"
-                    android:inputType="number" />
+                    android:hint="Город" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -164,12 +148,21 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        android:text="Найденные музеи"
+        android:text="Результаты поиска"
         android:textColor="#2D3436"
         android:textSize="20sp"
         android:textStyle="bold" />
 
-    <!-- Место для показа музеев (заглушка) -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewMuseums"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginBottom="16dp"
+        android:background="@android:color/white"
+        android:padding="8dp" />
+
+    <!-- Место для показа музеев (заглушка)
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -194,6 +187,6 @@
 
         </LinearLayout>
 
-    </com.google.android.material.card.MaterialCardView>
+    </com.google.android.material.card.MaterialCardView> -->
 
 </LinearLayout>

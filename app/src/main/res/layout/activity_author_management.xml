@@ -129,7 +129,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        android:text="Найденные авторы"
+        android:text="Результаты поиска"
         android:textColor="#2D3436"
         android:textSize="20sp"
         android:textStyle="bold" />

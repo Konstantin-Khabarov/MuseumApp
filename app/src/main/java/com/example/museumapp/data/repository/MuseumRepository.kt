@@ -4,7 +4,16 @@ import com.example.museumapp.data.model.Museum
 
 class MuseumRepository {
 
-    private val mockMuseums = listOf(
+    private val api = SupabaseClient.apiService
+
+    suspend fun getAllMuseums(): List<Museum> {
+        val headers = SupabaseClient.getHeaders()
+        val response = api.getAllMuseums(headers["apikey"]!!, headers["Authorization"]!!)
+        //println("DEBUG: Supabase response = $response")
+        return response
+    }
+
+    /*private val mockMuseums = listOf(
         Museum(
             id = 1,
             name = "Лувр",
@@ -35,17 +44,22 @@ class MuseumRepository {
             address = "Calle de Ruiz de Alarcón, 23, 28014 Madrid, Spain",
             country = "Испания"
         )
-    )
+    )*/
 
     suspend fun searchMuseums(
         name: String? = null,
-        museumId: Int? = null,
-        country: String? = null
+        city: String? = null
     ): List<Museum> {
-        return mockMuseums.filter { museum ->
-            (name.isNullOrEmpty() || museum.name.contains(name, ignoreCase = true)) &&
-                    (museumId == null || museum.id == museumId) &&
-                    (country.isNullOrEmpty() || museum.country.contains(country, ignoreCase = true))
+        val allMuseums = getAllMuseums()
+        return allMuseums.filter { museum ->
+            var matches = true
+            if (!name.isNullOrEmpty()) {
+                matches = matches && museum.name.contains(name, ignoreCase = true)
+            }
+            if (!city.isNullOrEmpty()) {
+                matches = matches && museum.city.contains(city, ignoreCase = true)
+            }
+            matches
         }
     }
 

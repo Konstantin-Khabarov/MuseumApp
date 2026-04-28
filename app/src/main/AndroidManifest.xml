@@ -41,6 +41,9 @@
         <activity
             android:name=".ui.exhibits.ExhibitDetailActivity"
             android:exported="false" />
+        <activity
+            android:name=".ui.museums.MuseumDetailActivity"
+            android:exported="false" />
     </application>
 
 </manifest>
