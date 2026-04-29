@@ -4,7 +4,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object SupabaseClient {
-    private const val BASE_URL = "https://bxrgvanoxllcwqvzkvny.supabase.co"
+    private const val BASE_URL = "https://bxrgvanoxllcwqvzkvny.supabase.co/"
     private const val API_KEY = "sb_publishable_JCl9V3yQIob6BLqreORDhg_bFucn7zf" // anon public key из Project Settings → API
     private const val AUTH_TOKEN = "Bearer $API_KEY"
 

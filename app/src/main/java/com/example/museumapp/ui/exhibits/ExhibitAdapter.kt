@@ -45,6 +45,6 @@ class ExhibitDiffCallback : DiffUtil.ItemCallback<Exhibit>() {
     override fun areContentsTheSame(oldItem: Exhibit, newItem: Exhibit): Boolean {
         // Сравниваем по содержимому (все поля кроме ID)
         return oldItem.title == newItem.title &&
-                oldItem.creationDate == newItem.creationDate
+                oldItem.creationYear == newItem.creationYear
     }
 }

@@ -26,7 +26,7 @@ class ExhibitDetailActivity : AppCompatActivity() {
             id = intent.getIntExtra("exhibit_id", -1),
             title = intent.getStringExtra("exhibit_title") ?: "",
             description = intent.getStringExtra("exhibit_description") ?: "",
-            creationDate = intent.getStringExtra("exhibit_creation_date") ?: "",
+            creationYear = intent.getIntExtra("exhibit_creation_year", 0),
             authorId = intent.getIntExtra("exhibit_author_id", -1).takeIf { it != -1 },
             museumId = intent.getIntExtra("exhibit_museum_id", -1).takeIf { it != -1 },
             //imageUrl = intent.getStringExtra("exhibit_image_url")
@@ -61,7 +61,7 @@ class ExhibitDetailActivity : AppCompatActivity() {
     private fun displayExhibit(exhibit: Exhibit) {
         binding.textDetailName.text = exhibit.title
         binding.textDetailDescription.text = exhibit.description.ifEmpty { "Описание отсутствует" }
-        binding.textDetailDate.text = "Дата создания: ${exhibit.creationDate}"
+        binding.textDetailDate.text = "Дата создания: ${exhibit.creationYear}"
 
         // Отображение информации об авторе
         val authorText = if (exhibit.authorId != null) {

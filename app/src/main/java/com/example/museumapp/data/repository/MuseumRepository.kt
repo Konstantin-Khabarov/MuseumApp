@@ -13,39 +13,6 @@ class MuseumRepository {
         return response
     }
 
-    /*private val mockMuseums = listOf(
-        Museum(
-            id = 1,
-            name = "Лувр",
-            address = "Rue de Rivoli, 75001 Paris, France",
-            country = "Франция"
-        ),
-        Museum(
-            id = 2,
-            name = "Эрмитаж",
-            address = "Дворцовая площадь, 2, Санкт-Петербург, Россия",
-            country = "Россия"
-        ),
-        Museum(
-            id = 3,
-            name = "Британский музей",
-            address = "Great Russell St, London WC1B 3DG, UK",
-            country = "Великобритания"
-        ),
-        Museum(
-            id = 4,
-            name = "Метрополитен-музей",
-            address = "1000 5th Ave, New York, NY 10028, USA",
-            country = "США"
-        ),
-        Museum(
-            id = 5,
-            name = "Прадо",
-            address = "Calle de Ruiz de Alarcón, 23, 28014 Madrid, Spain",
-            country = "Испания"
-        )
-    )*/
-
     suspend fun searchMuseums(
         name: String? = null,
         city: String? = null

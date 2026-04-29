@@ -6,7 +6,80 @@ import com.example.museumapp.data.model.Museum
 
 class ExhibitRepository {
     private val api = SupabaseClient.apiService
+    private val headers = SupabaseClient.getHeaders()
 
+    companion object {
+        private const val PAGE_SIZE = 20
+    }
+
+    suspend fun getExhibitsPage(page: Int, pageSize: Int = PAGE_SIZE): List<Exhibit> {
+        val start = page * pageSize
+        val end = start + pageSize - 1
+        val range = "$start-$end"
+
+        val response = api.getAllExhibits(
+            apiKey = headers["apikey"]!!,
+            token = headers["Authorization"]!!,
+            range = range
+        )
+
+        println("DEBUG: Loaded exhibits page $page ($range) = ${response.size} items")
+        return response.map { it.toExhibitWithRelations() }
+    }
+
+    suspend fun searchExhibits(
+        title: String?,
+        authorName: String?,
+        museumName: String?,
+        page: Int = 0,
+        pageSize: Int = PAGE_SIZE
+    ): List<Exhibit> {
+        val start = page * pageSize
+        val end = start + pageSize - 1
+        val range = "$start-$end"
+
+        val params = SearchParams(
+            title_filter = title?.takeIf { it.isNotBlank() },
+            author_name_filter = authorName?.takeIf { it.isNotBlank() },
+            museum_name_filter = museumName?.takeIf { it.isNotBlank() },
+            result_limit = pageSize,
+            result_offset = start
+        )
+
+        println("DEBUG: Search RPC call - title=$title, author=$authorName, museum=$museumName, range=$range")
+
+        val response = api.searchExhibitsRpc(
+            apiKey = headers["apikey"]!!,
+            token = headers["Authorization"]!!,
+            range = range,
+            params = params
+        )
+
+        println("DEBUG: Search RPC response = ${response.size} items")
+
+        // Конвертируем RPC ответ в модель Exhibit
+        return response.map { rpcExhibit ->
+            Exhibit(
+                id = rpcExhibit.exhibit_id,
+                title = rpcExhibit.name,
+                description = rpcExhibit.description,
+                creationYear = rpcExhibit.creation_year,
+                authorId = rpcExhibit.creator_ids?.firstOrNull(), // Берём первого автора
+                museumId = rpcExhibit.museum_id,
+                // Можно добавить museumName если нужно
+                //imageUrl = null
+            )
+        }
+    }
+
+    suspend fun loadNextPage(
+        currentQuery: String? = null,
+        currentAuthor: String? = null,
+        currentMuseum: String? = null,
+        nextPage: Int
+    ): List<Exhibit> {
+        return searchExhibits(currentQuery, currentAuthor, currentMuseum, nextPage)
+    }
     // Получение всех экспонатов
     suspend fun getAllExhibits(): List<Exhibit> {
         val headers = SupabaseClient.getHeaders()
@@ -18,8 +91,35 @@ class ExhibitRepository {
         return response
     }
 
+    suspend fun getAllAuthors(): List<Author> {
+        return api.getAllCreators(
+            apiKey = headers["apikey"]!!,
+            token = headers["Authorization"]!!
+        )
+    }
+
+    /**
+     * Получение всех музеев (для справочников)
+     */
+    suspend fun getAllMuseums(): List<Museum> {
+        return api.getAllMuseums(
+            apiKey = headers["apikey"]!!,
+            token = headers["Authorization"]!!
+        )
+    }
+
+    /**
+     * Получение всех залов (для справочников)
+     */
+    /*suspend fun getAllHalls(): List<Hall> {
+        return api.getAllHalls(
+            apiKey = headers["apikey"]!!,
+            token = headers["Authorization"]!!
+        )
+    }*/
+
     // Поиск экспонатов по различным критериям
-    suspend fun searchExhibits(
+    /*suspend fun searchExhibits(
         title: String? = null,
         authorName: String? = null,
         museumName: String? = null
@@ -59,7 +159,7 @@ class ExhibitRepository {
 
             matches
         }
-    }
+    }*/
 
     // Поиск экспонатов по ID автора
     suspend fun getExhibitsByAuthorId(authorId: Int): List<Exhibit> {
@@ -75,23 +175,21 @@ class ExhibitRepository {
 
     // Добавление нового экспоната
     suspend fun insertExhibit(exhibit: Exhibit): List<Exhibit> {
-        val headers = SupabaseClient.getHeaders()
         return api.insertExhibit(
             apiKey = headers["apikey"]!!,
             token = headers["Authorization"]!!,
-            exhibit = exhibit
-        )
+            exhibit = exhibit.toSupabaseExhibit()
+        ).map { it.toExhibitWithRelations() }
     }
 
     // Обновление экспоната
     suspend fun updateExhibit(id: Int, exhibit: Exhibit): List<Exhibit> {
-        val headers = SupabaseClient.getHeaders()
         return api.updateExhibit(
             id = id,
             apiKey = headers["apikey"]!!,
             token = headers["Authorization"]!!,
-            exhibit = exhibit
-        )
+            exhibit = exhibit.toSupabaseExhibit()
+        ).map { it.toExhibitWithRelations() }
     }
 
     // Удаление экспоната
@@ -104,22 +202,12 @@ class ExhibitRepository {
         )
     }
 
-    // Вспомогательные методы для получения авторов и музеев
-    private suspend fun getAllAuthors(): List<Author> {
-        val headers = SupabaseClient.getHeaders()
-        val response = api.getAllCreators(
-            apiKey = headers["apikey"]!!,
-            token = headers["Authorization"]!!
-        )
-        return response
+    private fun Exhibit.toSupabaseExhibit(): Exhibit {
+        return this
     }
 
-    private suspend fun getAllMuseums(): List<Museum> {
-        val headers = SupabaseClient.getHeaders()
-        val response = api.getAllMuseums(
-            apiKey = headers["apikey"]!!,
-            token = headers["Authorization"]!!
-        )
-        return response
+    // Конвертация с добавлением связанных данных (если нужно)
+    private fun Exhibit.toExhibitWithRelations(): Exhibit {
+        return this
     }
 }
