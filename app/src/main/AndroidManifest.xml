@@ -44,6 +44,11 @@
         <activity
             android:name=".ui.museums.MuseumDetailActivity"
             android:exported="false" />
+        <activity
+            android:name=".ui.exhibits.AddExhibitActivity"
+            android:exported="false"
+            android:label="Добавить экспонат"
+            android:parentActivityName=".ui.exhibits.ExhibitManagementActivity" />
     </application>
 
 </manifest>

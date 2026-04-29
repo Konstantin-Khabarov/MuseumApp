@@ -4,6 +4,7 @@ import com.example.museumapp.data.model.Exhibit
 
 sealed class ExhibitState {
     object Idle : ExhibitState()
+    object Loading : ExhibitState()
     data class Success(val exhibits: List<Exhibit>) : ExhibitState()
     data class Error(val message: String) : ExhibitState()
     data class ShowMessage(val message: String) : ExhibitState()

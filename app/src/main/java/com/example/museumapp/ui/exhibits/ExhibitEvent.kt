@@ -7,7 +7,15 @@ sealed class ExhibitEvent {
         val museumName: String
     ) : ExhibitEvent()
 
+    object NavigateToAddExhibit : ExhibitEvent()
+    data class SaveExhibit(
+        val title: String,
+        val description: String,
+        val creationYear: Int,
+        val hallId: Int?,
+        val authorId: Int?
+    ) : ExhibitEvent()
+
     object ResetSearch : ExhibitEvent()
-    object AddExhibit : ExhibitEvent()
     object NavigateBack : ExhibitEvent()
 }

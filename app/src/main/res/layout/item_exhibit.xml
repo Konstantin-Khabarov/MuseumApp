@@ -27,16 +27,6 @@
             android:textSize="16sp"
             android:textStyle="bold" />
 
-        <!-- Дата создания -->
-        <TextView
-            android:id="@+id/textExhibitDate"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Дата создания"
-            android:textColor="#757575"
-            android:textSize="12sp" />
-
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

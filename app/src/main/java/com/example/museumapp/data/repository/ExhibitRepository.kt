@@ -1,8 +1,10 @@
 package com.example.museumapp.data.repository
 
+import android.util.Log
 import com.example.museumapp.data.model.Exhibit
 import com.example.museumapp.data.model.Author
 import com.example.museumapp.data.model.Museum
+import kotlinx.coroutines.delay
 
 class ExhibitRepository {
     private val api = SupabaseClient.apiService
@@ -17,14 +19,11 @@ class ExhibitRepository {
         val end = start + pageSize - 1
         val range = "$start-$end"
 
-        val response = api.getAllExhibits(
+        return api.getAllExhibits(
             apiKey = headers["apikey"]!!,
             token = headers["Authorization"]!!,
-            range = range
-        )
-
-        println("DEBUG: Loaded exhibits page $page ($range) = ${response.size} items")
-        return response.map { it.toExhibitWithRelations() }
+            range = range  // ← Это критично!
+        ).map { it.toExhibitWithRelations() }
     }
 
     suspend fun searchExhibits(
@@ -58,17 +57,21 @@ class ExhibitRepository {
         println("DEBUG: Search RPC response = ${response.size} items")
 
         // Конвертируем RPC ответ в модель Exhibit
-        return response.map { rpcExhibit ->
-            Exhibit(
-                id = rpcExhibit.exhibit_id,
-                title = rpcExhibit.name,
-                description = rpcExhibit.description,
-                creationYear = rpcExhibit.creation_year,
-                authorId = rpcExhibit.creator_ids?.firstOrNull(), // Берём первого автора
-                museumId = rpcExhibit.museum_id,
-                // Можно добавить museumName если нужно
-                //imageUrl = null
-            )
+        return withRetry {
+            response.map { rpcExhibit ->
+                Exhibit(
+                    id = rpcExhibit.exhibit_id,
+                    title = rpcExhibit.name,
+                    description = rpcExhibit.description,
+                    creationYear = rpcExhibit.creation_year,
+                    authorId = rpcExhibit.creator_ids?.firstOrNull(), // Берём первого автора
+                    museumId = rpcExhibit.museum_id,
+                    authorName = rpcExhibit.author_name,
+                    museumName = rpcExhibit.museum_name
+                    // Можно добавить museumName если нужно
+                    //imageUrl = null
+                )
+            }
         }
     }
 
@@ -98,6 +101,25 @@ class ExhibitRepository {
         )
     }
 
+    private suspend fun <T> withRetry(
+        times: Int = 3,  // Максимум 3 попытки
+        initialDelay: Long = 100,  // 100 мс перед первой повторной
+        maxDelay: Long = 1000,     // Не больше 1 сек между попытками
+        block: suspend () -> T
+    ): T {
+        var currentDelay = initialDelay
+        repeat(times - 1) {
+            try {
+                return block()
+            } catch (e: java.net.SocketTimeoutException) {
+                Log.w("Repository", "Timeout, retrying in $currentDelay ms...")
+                delay(currentDelay)
+                currentDelay = (currentDelay * 2).coerceAtMost(maxDelay) // Экспоненциальная задержка
+            }
+        }
+        return block() // Последняя попытка (может выбросить исключение)
+    }
+
     /**
      * Получение всех музеев (для справочников)
      */
@@ -118,69 +140,84 @@ class ExhibitRepository {
         )
     }*/
 
-    // Поиск экспонатов по различным критериям
-    /*suspend fun searchExhibits(
-        title: String? = null,
-        authorName: String? = null,
-        museumName: String? = null
-    ): List<Exhibit> {
-        val allExhibits = getAllExhibits()
 
-        // Если нет критериев поиска, возвращаем все экспонаты
-        if (title.isNullOrEmpty() && authorName.isNullOrEmpty() && museumName.isNullOrEmpty()) {
-            return allExhibits
+    suspend fun addExhibit(
+        name: String,
+        description: String,
+        creationYear: Int,
+        hallId: Int?,
+        authorId: Int?
+    ): Exhibit {
+        val headers = SupabaseClient.getHeaders()
+
+        // 1. Создаём экспонат
+        val exhibitRequest = ExhibitInsertRequest(
+            name = name,
+            description = description,
+            creation_year = creationYear,
+            current_hall_id = hallId
+        )
+
+        val createdExhibits = api.insertExhibit(
+            apiKey = headers["apikey"]!!,
+            token = headers["Authorization"]!!,
+            prefer = "return=representation",
+            exhibit = exhibitRequest
+        )
+
+        if (createdExhibits.isEmpty()) {
+            throw Exception("Не удалось создать экспонат")
         }
 
-        // Получаем всех авторов и музеи для поиска по именам
-        val authors = getAllAuthors()
-        val museums = getAllMuseums()
+        val createdExhibit = createdExhibits[0]
+        val exhibitId = createdExhibit.exhibit_id
 
-        return allExhibits.filter { exhibit ->
-            var matches = true
+        // 2. Если указан автор — создаём связь
+        if (authorId != null && authorId > 0) {
+            val relationRequest = ExhibitCreatorRequest(
+                exhibit_id = exhibitId,
+                creator_id = authorId
+            )
 
-            // Поиск по названию экспоната
-            if (!title.isNullOrEmpty()) {
-                matches = matches && exhibit.title.contains(title, ignoreCase = true)
-            }
-
-            // Поиск по имени автора
-            if (!authorName.isNullOrEmpty()) {
-                val author = authors.find { it.id == exhibit.authorId }
-                val authorMatches = author?.name?.contains(authorName, ignoreCase = true) ?: false
-                matches = matches && authorMatches
-            }
-
-            // Поиск по названию музея
-            if (!museumName.isNullOrEmpty()) {
-                val museum = museums.find { it.id == exhibit.museumId }
-                val museumMatches = museum?.name?.contains(museumName, ignoreCase = true) ?: false
-                matches = matches && museumMatches
-            }
-
-            matches
+            api.insertExhibitCreator(
+                apiKey = headers["apikey"]!!,
+                token = headers["Authorization"]!!,
+                prefer = "return=representation",
+                relation = relationRequest
+            )
         }
-    }*/
 
-    // Поиск экспонатов по ID автора
-    suspend fun getExhibitsByAuthorId(authorId: Int): List<Exhibit> {
-        val allExhibits = getAllExhibits()
-        return allExhibits.filter { it.authorId == authorId }
+        // 3. Возвращаем объект для UI (конвертируем из RPC-ответа)
+        return Exhibit(
+            id = exhibitId,
+            title = createdExhibit.name,
+            description = createdExhibit.description,
+            creationYear = createdExhibit.creation_year,
+            hallId = createdExhibit.current_hall_id,
+            authorId = authorId,
+            museumId = createdExhibit.museum_id,
+            authorName = null,  // Заполнится при следующей загрузке списка
+            museumName = createdExhibit.museum_name,
+            imageUrl = null
+        )
     }
 
-    // Поиск экспонатов по ID музея
-    suspend fun getExhibitsByMuseumId(museumId: Int): List<Exhibit> {
-        val allExhibits = getAllExhibits()
-        return allExhibits.filter { it.museumId == museumId }
+    suspend fun getAuthorsForSpinner(): List<AuthorSpinnerItem> {
+        val authors = api.getAllCreators(
+            apiKey = headers["apikey"]!!,
+            token = headers["Authorization"]!!
+        )
+        return authors.map { AuthorSpinnerItem(id = it.id, name = it.name) }
     }
 
     // Добавление нового экспоната
-    suspend fun insertExhibit(exhibit: Exhibit): List<Exhibit> {
+    /*suspend fun insertExhibit(exhibit: Exhibit): List<Exhibit> {
         return api.insertExhibit(
             apiKey = headers["apikey"]!!,
             token = headers["Authorization"]!!,
             exhibit = exhibit.toSupabaseExhibit()
         ).map { it.toExhibitWithRelations() }
-    }
+    }*/
 
     // Обновление экспоната
     suspend fun updateExhibit(id: Int, exhibit: Exhibit): List<Exhibit> {
@@ -210,4 +247,10 @@ class ExhibitRepository {
     private fun Exhibit.toExhibitWithRelations(): Exhibit {
         return this
     }
+}
+data class AuthorSpinnerItem(
+    val id: Int,
+    val name: String
+) {
+    override fun toString(): String = name  // Для отображения в Spinner
 }

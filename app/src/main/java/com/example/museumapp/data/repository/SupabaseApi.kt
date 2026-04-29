@@ -50,14 +50,6 @@ interface SupabaseApi {
     suspend fun getAllExhibits(
         @Header("apikey") apiKey: String,
         @Header("Authorization") token: String,
-        @Header("Range") range: String = "0-19", // Пагинация: 0-49, 50-99 и т.д.
-        @Query("select") select: String = "*"
-    ): List<Exhibit>
-
-    @GET("rest/v1/exhibit")
-    suspend fun getAllExhibits(
-        @Header("apikey") apiKey: String,
-        @Header("Authorization") token: String,
         @Header("Range") range: String = "0-19"
     ): List<Exhibit>
 
@@ -83,8 +75,16 @@ interface SupabaseApi {
         @Header("apikey") apiKey: String,
         @Header("Authorization") token: String,
         @Header("Prefer") prefer: String = "return=representation",
-        @Body exhibit: Exhibit
-    ): List<Exhibit>
+        @Body exhibit: ExhibitInsertRequest
+    ): List<ExhibitRpcResponse>
+
+    @POST("rest/v1/exhibit_creator")
+    suspend fun insertExhibitCreator(
+        @Header("apikey") apiKey: String,
+        @Header("Authorization") token: String,
+        @Header("Prefer") prefer: String = "return=representation",
+        @Body relation: ExhibitCreatorRequest
+    ): List<ExhibitCreatorResponse>
 
     @PATCH("rest/v1/exhibit?id=eq.{id}")
     suspend fun updateExhibit(
@@ -125,5 +125,24 @@ data class ExhibitRpcResponse(
     val current_hall_id: Int?,
     val creator_ids: List<Int>?,
     val museum_id: Int?,
+    val author_name: String?,
     val museum_name: String?
+)
+
+data class ExhibitInsertRequest(
+    val name: String,
+    val description: String,
+    val creation_year: Int,
+    val current_hall_id: Int? = null
+    // imageUrl можно добавить при необходимости
+)
+
+data class ExhibitCreatorRequest(
+    val exhibit_id: Int,
+    val creator_id: Int
+)
+
+data class ExhibitCreatorResponse(
+    val exhibit_id: Int,
+    val creator_id: Int
 )

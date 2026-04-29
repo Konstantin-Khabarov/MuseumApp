@@ -18,6 +18,7 @@ class ExhibitManagementActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityExhibitManagementBinding
     private lateinit var exhibitAdapter: ExhibitAdapter
+    private var _uiStateWasNotIdleBefore = false
 
     private val viewModel: ExhibitViewModel by viewModels {
         ExhibitViewModelFactory((application as MuseumApp).exhibitRepository)
@@ -54,14 +55,19 @@ class ExhibitManagementActivity : AppCompatActivity() {
 
     private fun setupRecyclerView() {
         exhibitAdapter = ExhibitAdapter { exhibit ->
-            // Передаём экспонат в новый экран детальной информации
             val intent = Intent(this, ExhibitDetailActivity::class.java).apply {
                 putExtra("exhibit_id", exhibit.id)
                 putExtra("exhibit_title", exhibit.title)
                 putExtra("exhibit_description", exhibit.description)
                 putExtra("exhibit_creation_year", exhibit.creationYear)
+
+                // ID (на всякий случай)
                 putExtra("exhibit_author_id", exhibit.authorId)
                 putExtra("exhibit_museum_id", exhibit.museumId)
+
+                putExtra("exhibit_author_name", exhibit.authorName)
+                putExtra("exhibit_museum_name", exhibit.museumName)
+
                 //putExtra("exhibit_image_url", exhibit.imageUrl)
             }
             startActivity(intent)
@@ -85,6 +91,7 @@ class ExhibitManagementActivity : AppCompatActivity() {
     private fun setupObservers() {
         lifecycleScope.launch {
             viewModel.uiState.collect { state ->
+                _uiStateWasNotIdleBefore = state !is ExhibitState.Idle
                 handleState(state)
             }
         }
@@ -93,7 +100,14 @@ class ExhibitManagementActivity : AppCompatActivity() {
     private fun handleState(state: ExhibitState) {
         when (state) {
             is ExhibitState.Idle -> {
-                // Ничего не делаем
+                // 🔥 Показываем загрузку при переходе в Idle перед загрузкой данных
+                // Но только если это не начальный запуск
+                if (_uiStateWasNotIdleBefore) {
+                    setLoading(true)
+                }
+            }
+            is ExhibitState.Loading -> {
+                setLoading(true)
             }
             is ExhibitState.Success -> {
                 showSearchResults(state.exhibits)
@@ -105,7 +119,6 @@ class ExhibitManagementActivity : AppCompatActivity() {
             }
             is ExhibitState.ShowMessage -> {
                 showToast(state.message)
-                setLoading(false)
             }
             ExhibitState.NavigateBack -> {
                 finish()
@@ -147,7 +160,7 @@ class ExhibitManagementActivity : AppCompatActivity() {
 
         // Кнопка добавления нового экспоната
         binding.btnAdd.setOnClickListener {
-            viewModel.onEvent(ExhibitEvent.AddExhibit)
+            viewModel.onEvent(ExhibitEvent.NavigateToAddExhibit)
         }
     }
 

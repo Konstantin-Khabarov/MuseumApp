@@ -15,4 +15,8 @@ data class Exhibit(
     val hallId: Int? = null,
     val authorId: Int? = null, // Для удобства (первый автор)
     val museumId: Int? = null, // Для удобства (через hall)
+    val authorName: String? = null,
+    val museumName: String? = null,
+
+    val imageUrl: String? = null
 )
