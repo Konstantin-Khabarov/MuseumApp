@@ -8,8 +8,37 @@
     android:background="#FAFAFA"
     tools:context=".ui.main.MainActivity">
 
+    <ImageButton
+        android:id="@+id/btnLogout"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:src="@drawable/ic_logout"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Выйти"
+        android:visibility="gone"
+        app:tint="#F44336"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!--  Имя пользователя (слева от кнопки выхода, выровнено по центру) -->
+    <TextView
+        android:id="@+id/textUserName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:text=""
+        android:textColor="#666"
+        android:textSize="14sp"
+        android:visibility="gone"
+        android:gravity="center_vertical"
+        app:layout_constraintTop_toTopOf="@+id/btnLogout"
+        app:layout_constraintBottom_toBottomOf="@+id/btnLogout"
+        app:layout_constraintEnd_toStartOf="@+id/btnLogout" />
+
     <Button
-        android:id="@+id/btnRegistration"
+        android:id="@+id/btnLogin"
         android:layout_width="0dp"
         android:layout_height="65dp"
         android:layout_marginStart="28dp"
@@ -64,13 +93,16 @@
             android:layout_marginBottom="16dp"
             app:cardCornerRadius="12dp"
             app:cardElevation="4dp"
+            app:strokeColor="#2196F3"
+            app:strokeWidth="2dp"
             app:cardBackgroundColor="@android:color/white">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:padding="20dp">
+                android:padding="20dp"
+                >
 
                 <ImageView
                     android:layout_width="36dp"
@@ -102,7 +134,9 @@
             android:layout_marginBottom="16dp"
             app:cardCornerRadius="12dp"
             app:cardElevation="4dp"
-            app:cardBackgroundColor="@android:color/white">
+            app:cardBackgroundColor="@android:color/white"
+            app:strokeColor="#2196F3"
+            app:strokeWidth="2dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -140,7 +174,9 @@
             android:layout_marginBottom="16dp"
             app:cardCornerRadius="12dp"
             app:cardElevation="4dp"
-            app:cardBackgroundColor="@android:color/white">
+            app:cardBackgroundColor="@android:color/white"
+            app:strokeColor="#2196F3"
+            app:strokeWidth="2dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -178,7 +214,9 @@
             android:layout_marginBottom="6dp"
             app:cardCornerRadius="12dp"
             app:cardElevation="4dp"
-            app:cardBackgroundColor="@android:color/white">
+            app:cardBackgroundColor="@android:color/white"
+            app:strokeColor="#2196F3"
+            app:strokeWidth="2dp">
 
             <LinearLayout
                 android:layout_width="match_parent"

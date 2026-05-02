@@ -17,6 +17,8 @@ object SupabaseClient {
 
     fun getHeaders() = mapOf(
         "apikey" to API_KEY,
-        "Authorization" to AUTH_TOKEN
+        "Authorization" to AUTH_TOKEN,
+        "Content-Type" to "application/json",
+        "Prefer" to "return=representation"
     )
 }

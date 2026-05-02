@@ -8,12 +8,23 @@ sealed class ExhibitEvent {
     ) : ExhibitEvent()
 
     object NavigateToAddExhibit : ExhibitEvent()
+    object ClearNavigationState : ExhibitEvent()
     data class SaveExhibit(
         val title: String,
         val description: String,
         val creationYear: Int,
         val hallId: Int?,
         val authorId: Int?
+    ) : ExhibitEvent()
+
+    data class DeleteExhibit(val exhibitId: Int) : ExhibitEvent()
+    data class UpdateExhibit(
+        val exhibitId: Int,
+        val title: String,
+        val description: String,
+        val creationYear: Int,
+        val museumId: Int,
+        val hallNumber: String
     ) : ExhibitEvent()
 
     object ResetSearch : ExhibitEvent()

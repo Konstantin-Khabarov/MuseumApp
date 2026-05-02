@@ -4,8 +4,10 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.museumapp.data.model.Exhibit
+import com.example.museumapp.data.model.Hall
 import com.example.museumapp.data.repository.AuthorSpinnerItem
 import com.example.museumapp.data.repository.ExhibitRepository
+import com.example.museumapp.data.repository.MuseumSpinnerItem
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -31,6 +33,7 @@ class ExhibitViewModel(
     private var isLoadingMore = false              // Идёт ли загрузка следующей страницы?
 
     private var currentLoadJob: Job? = null
+    var currentExhibitId: Int = -1
     private var currentTitle: String? = null
     private var currentAuthorName: String? = null
     private var currentMuseumName: String? = null
@@ -71,6 +74,14 @@ class ExhibitViewModel(
                 // Просто отправляем сигнал навигации
                 _uiState.value = ExhibitState.NavigateToAddExhibit
             }
+            ExhibitEvent.ClearNavigationState -> {
+                // Возвращаемся к Idle или Success (чтобы StateFlow увидел изменение)
+                _uiState.value = if (cachedExhibits.isNotEmpty()) {
+                    ExhibitState.Success(cachedExhibits.toList())
+                } else {
+                    ExhibitState.Idle
+                }
+            }
             is ExhibitEvent.SaveExhibit -> {
                 addNewExhibit(
                     title = event.title,
@@ -80,8 +91,83 @@ class ExhibitViewModel(
                     authorId = event.authorId
                 )
             }
+            is ExhibitEvent.UpdateExhibit -> {
+                updateExhibit(
+                    exhibitId = event.exhibitId,
+                    title = event.title,
+                    description = event.description,
+                    creationYear = event.creationYear,
+                    museumId = event.museumId,
+                    hallNumber = event.hallNumber
+                )
+            }
+            is ExhibitEvent.DeleteExhibit -> {
+                deleteExhibit(event.exhibitId)
+            }
             ExhibitEvent.NavigateBack -> {
                 _uiState.value = ExhibitState.NavigateBack
+            }
+        }
+    }
+
+    private fun deleteExhibit(exhibitId: Int) {
+        viewModelScope.launch {
+            _uiState.value = ExhibitState.Loading  // Показываем загрузку
+
+            try {
+                val result = exhibitRepository.deleteExhibit(exhibitId)
+
+                result
+                    .onSuccess {
+                        // 🔥 Успех: удаляем из кэша и уведомляем UI
+                        exhibitRepository.removeExhibitFromCache(exhibitId)
+                        _uiState.value = ExhibitState.NavigateBack
+                    }
+                    .onFailure { error ->
+                        _uiState.value = ExhibitState.Error("Ошибка удаления: ${error.message}")
+                    }
+
+            } catch (e: Exception) {
+                _uiState.value = ExhibitState.Error("Ошибка: ${e.message}")
+            }
+        }
+    }
+
+    private fun updateExhibit(
+        exhibitId: Int,
+        title: String,
+        description: String,
+        creationYear: Int,
+        museumId: Int,
+        hallNumber: String
+    ) {
+        viewModelScope.launch {
+            _uiState.value = ExhibitState.Loading
+
+            try {
+                val result = exhibitRepository.updateExhibit(
+                    exhibitId = exhibitId,
+                    name = title,
+                    description = description,
+                    creationYear = creationYear,
+                    museumId = museumId,
+                    hallNumber = hallNumber
+                )
+
+                result
+                    .onSuccess { updatedExhibit ->
+                        // Обновляем в кэше
+                        exhibitRepository.updateExhibitInCache(updatedExhibit)
+
+                        // Обновляем список в кэше
+                        // (если вы храните список отдельно)
+                        _uiState.value = ExhibitState.NavigateBack
+                    }
+                    .onFailure { error ->
+                        _uiState.value = ExhibitState.Error("Ошибка обновления: ${error.message}")
+                    }
+            } catch (e: Exception) {
+                _uiState.value = ExhibitState.Error("Ошибка: ${e.message}")
             }
         }
     }
@@ -218,26 +304,20 @@ class ExhibitViewModel(
         }
     }
 
-    private fun searchExhibits(title: String, authorName: String, museumName: String) {
-        currentTitle = title
-        currentAuthorName = authorName
-        currentMuseumName = museumName
-
+    fun loadExhibitDetails(exhibitId: Int) {
         viewModelScope.launch {
-            try {
-                val exhibits = exhibitRepository.searchExhibits(
-                    title = title.ifEmpty { null },
-                    authorName = authorName.ifEmpty { null },
-                    museumName = museumName.ifEmpty { null }
-                )
+            _uiState.value = ExhibitState.Loading // Можно убрать, так как будет мгновенно
 
-                _uiState.value = if (exhibits.isEmpty()) {
-                    ExhibitState.ShowMessage("Экспонаты не найдены")
-                } else {
-                    ExhibitState.Success(exhibits)
-                }
-            } catch (e: Exception) {
-                _uiState.value = ExhibitState.Error("Ошибка поиска: ${e.message}")
+            // 🔥 Вызываем метод репозитория
+            val result = exhibitRepository.getExhibitById(exhibitId)
+
+            result.onSuccess { exhibit ->
+                // 🔥 Эмитим состояние с полными данными
+                _uiState.value = ExhibitState.ExhibitDetailsLoaded(exhibit)
+            }.onFailure { error ->
+                // Если кэш пуст (редкий кейс), можно попробовать загрузить из сети
+                // или показать ошибку
+                _uiState.value = ExhibitState.Error("Данные не найдены. Обновите список.")
             }
         }
     }
@@ -315,8 +395,10 @@ class ExhibitViewModel(
     suspend fun getAuthorsForSpinner(): List<AuthorSpinnerItem> {
         return exhibitRepository.getAuthorsForSpinner()
     }
-
-    fun getExhibitById(id: Int): Exhibit? {
-        return cachedExhibits.find { it.id == id }
+    suspend fun getMuseumsForSpinner(): List<MuseumSpinnerItem> {
+        return exhibitRepository.getMuseumsForSpinner()
+    }
+    suspend fun getHallsByMuseumId(museumId: Int): List<Hall> {
+        return exhibitRepository.getHallsByMuseumId(museumId)
     }
 }

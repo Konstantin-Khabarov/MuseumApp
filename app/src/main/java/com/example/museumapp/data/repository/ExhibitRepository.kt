@@ -1,8 +1,10 @@
 package com.example.museumapp.data.repository
 
 import android.util.Log
+import com.example.museumapp.data.cache.DataCache
 import com.example.museumapp.data.model.Exhibit
 import com.example.museumapp.data.model.Author
+import com.example.museumapp.data.model.Hall
 import com.example.museumapp.data.model.Museum
 import kotlinx.coroutines.delay
 
@@ -34,8 +36,7 @@ class ExhibitRepository {
         pageSize: Int = PAGE_SIZE
     ): List<Exhibit> {
         val start = page * pageSize
-        val end = start + pageSize - 1
-        val range = "$start-$end"
+        val range = "$start-${start + pageSize - 1}"
 
         val params = SearchParams(
             title_filter = title?.takeIf { it.isNotBlank() },
@@ -45,33 +46,42 @@ class ExhibitRepository {
             result_offset = start
         )
 
-        println("DEBUG: Search RPC call - title=$title, author=$authorName, museum=$museumName, range=$range")
+        return try {
+            Log.d("Repository", "Fetching search results...")
 
-        val response = api.searchExhibitsRpc(
-            apiKey = headers["apikey"]!!,
-            token = headers["Authorization"]!!,
-            range = range,
-            params = params
-        )
+            val rpcResponse = api.searchExhibitsRpc(
+                apiKey = headers["apikey"]!!,
+                token = headers["Authorization"]!!,
+                range = range,
+                params = params
+            )
 
-        println("DEBUG: Search RPC response = ${response.size} items")
+            Log.d("Repository", "RPC returned ${rpcResponse.size} items")
 
-        // Конвертируем RPC ответ в модель Exhibit
-        return withRetry {
-            response.map { rpcExhibit ->
+            // Конвертируем в модель Exhibit
+            val exhibits = rpcResponse.map { rpc ->
                 Exhibit(
-                    id = rpcExhibit.exhibit_id,
-                    title = rpcExhibit.name,
-                    description = rpcExhibit.description,
-                    creationYear = rpcExhibit.creation_year,
-                    authorId = rpcExhibit.creator_ids?.firstOrNull(), // Берём первого автора
-                    museumId = rpcExhibit.museum_id,
-                    authorName = rpcExhibit.author_name,
-                    museumName = rpcExhibit.museum_name
-                    // Можно добавить museumName если нужно
-                    //imageUrl = null
+                    id = rpc.exhibit_id,
+                    title = rpc.name,
+                    description = rpc.description,
+                    creationYear = rpc.creation_year,
+                    hallId = rpc.current_hall_id,
+                    museumId = rpc.museum_id,
+                    authorId = rpc.creator_ids?.firstOrNull(),
+                    authorName = rpc.author_name,
+                    museumName = rpc.museum_name
                 )
             }
+
+            // 🔥 Сохраняем в DataCache
+            DataCache.cacheExhibits(exhibits, clearPrevious = (page == 0))
+            Log.d("Repository", "Cached ${exhibits.size} exhibits in DataCache")
+
+            exhibits
+
+        } catch (e: Exception) {
+            Log.e("Repository", "Search failed", e)
+            emptyList()
         }
     }
 
@@ -83,26 +93,9 @@ class ExhibitRepository {
     ): List<Exhibit> {
         return searchExhibits(currentQuery, currentAuthor, currentMuseum, nextPage)
     }
-    // Получение всех экспонатов
-    suspend fun getAllExhibits(): List<Exhibit> {
-        val headers = SupabaseClient.getHeaders()
-        val response = api.getAllExhibits(
-            apiKey = headers["apikey"]!!,
-            token = headers["Authorization"]!!
-        )
-        println("DEBUG: Supabase response = $response")
-        return response
-    }
-
-    suspend fun getAllAuthors(): List<Author> {
-        return api.getAllCreators(
-            apiKey = headers["apikey"]!!,
-            token = headers["Authorization"]!!
-        )
-    }
 
     private suspend fun <T> withRetry(
-        times: Int = 3,  // Максимум 3 попытки
+        times: Int = 2,  // Максимум 3 попытки
         initialDelay: Long = 100,  // 100 мс перед первой повторной
         maxDelay: Long = 1000,     // Не больше 1 сек между попытками
         block: suspend () -> T
@@ -119,26 +112,6 @@ class ExhibitRepository {
         }
         return block() // Последняя попытка (может выбросить исключение)
     }
-
-    /**
-     * Получение всех музеев (для справочников)
-     */
-    suspend fun getAllMuseums(): List<Museum> {
-        return api.getAllMuseums(
-            apiKey = headers["apikey"]!!,
-            token = headers["Authorization"]!!
-        )
-    }
-
-    /**
-     * Получение всех залов (для справочников)
-     */
-    /*suspend fun getAllHalls(): List<Hall> {
-        return api.getAllHalls(
-            apiKey = headers["apikey"]!!,
-            token = headers["Authorization"]!!
-        )
-    }*/
 
 
     suspend fun addExhibit(
@@ -203,44 +176,152 @@ class ExhibitRepository {
     }
 
     suspend fun getAuthorsForSpinner(): List<AuthorSpinnerItem> {
+        return DataCache.getAuthors {
         val authors = api.getAllCreators(
             apiKey = headers["apikey"]!!,
             token = headers["Authorization"]!!
         )
-        return authors.map { AuthorSpinnerItem(id = it.id, name = it.name) }
+        authors.map { AuthorSpinnerItem(id = it.id, name = it.name) }
+        }
+    }
+    suspend fun getMuseumsForSpinner(): List<MuseumSpinnerItem> {
+        return DataCache.getMuseums {
+            val museums = api.getAllMuseums(
+                apiKey = headers["apikey"]!!,
+                token = headers["Authorization"]!!
+            )
+            museums.map { MuseumSpinnerItem(id = it.id, name = it.name) }
+        }
     }
 
-    // Добавление нового экспоната
-    /*suspend fun insertExhibit(exhibit: Exhibit): List<Exhibit> {
-        return api.insertExhibit(
+    suspend fun getHallsByMuseumId(museumId: Int): List<Hall> {
+        return api.getHallsByMuseumId(
             apiKey = headers["apikey"]!!,
             token = headers["Authorization"]!!,
-            exhibit = exhibit.toSupabaseExhibit()
-        ).map { it.toExhibitWithRelations() }
-    }*/
+            museumIdFilter = "eq.$museumId"  // ← Форматируем как "eq.123"
+        ).sortedBy { it.hall_number?.toIntOrNull() ?: Int.MAX_VALUE }
+    }
 
     // Обновление экспоната
-    suspend fun updateExhibit(id: Int, exhibit: Exhibit): List<Exhibit> {
-        return api.updateExhibit(
-            id = id,
-            apiKey = headers["apikey"]!!,
-            token = headers["Authorization"]!!,
-            exhibit = exhibit.toSupabaseExhibit()
-        ).map { it.toExhibitWithRelations() }
+    suspend fun updateExhibit(
+        exhibitId: Int,
+        name: String,
+        description: String,
+        creationYear: Int,
+        museumId: Int,
+        hallNumber: String
+    ): Result<Exhibit> {
+        return try {
+            Log.d("ExhibitRepository", "Updating exhibit $exhibitId...")
+
+            val updated = api.updateExhibitRpc(
+                apiKey = headers["apikey"]!!,
+                token = headers["Authorization"]!!,
+                params = UpdateExhibitParams(
+                    p_exhibit_id = exhibitId,
+                    p_name = name,
+                    p_description = description,
+                    p_creation_year = creationYear,
+                    p_museum_id = museumId,
+                    p_hall_number = hallNumber
+                )
+            )
+
+            val updatedExhibit = Exhibit(
+                id = updated.exhibit_id,
+                title = updated.name,
+                description = updated.description,
+                creationYear = updated.creation_year,
+                hallId = updated.current_hall_id,
+                museumId = updated.museum_id,
+                authorId = updated.creator_ids?.firstOrNull(),
+                authorName = updated.author_name,
+                museumName = updated.museum_name
+            )
+
+            Log.d("ExhibitRepository", "Successfully updated exhibit $exhibitId")
+            Result.success(updatedExhibit)
+        } catch (e: Exception) {
+            Log.e("ExhibitRepository", "Update error: ${e.message}", e)
+            Result.failure(e)
+        }
     }
 
     // Удаление экспоната
-    suspend fun deleteExhibit(id: Int) {
-        val headers = SupabaseClient.getHeaders()
-        api.deleteExhibit(
-            id = id,
-            apiKey = headers["apikey"]!!,
-            token = headers["Authorization"]!!
-        )
+    suspend fun deleteExhibit(exhibitId: Int): Result<Unit> {
+        return try {
+            Log.d("ExhibitRepository", "Deleting exhibit $exhibitId via RPC...")
+
+            val result = api.deleteExhibitRpc(
+                apiKey = headers["apikey"]!!,
+                token = headers["Authorization"]!!,
+                params = DeleteExhibitParams(p_exhibit_id = exhibitId)
+            )
+
+            if (result) {
+                Log.d("ExhibitRepository", "Successfully deleted exhibit $exhibitId")
+                Result.success(Unit)
+            } else {
+                Log.e("ExhibitRepository", "Exhibit $exhibitId not found")
+                Result.failure(Exception("Exhibit not found"))
+            }
+        } catch (e: Exception) {
+            Log.e("ExhibitRepository", "Delete error: ${e.message}", e)
+            Result.failure(e)
+        }
     }
 
     private fun Exhibit.toSupabaseExhibit(): Exhibit {
         return this
+    }
+
+    // В ExhibitRepository.kt
+    suspend fun getExhibitById(exhibitId: Int): Result<Exhibit> {
+        return try {
+            // 🔥 1. Пробуем получить из кэша
+            val cached = DataCache.getExhibit(exhibitId) { null } // loader = null, т.к. не загружаем автоматически
+
+            if (cached != null) {
+                Log.d("Repository", "Found exhibit $exhibitId in DataCache")
+                return Result.success(cached)
+            }
+
+            // 🔥 2. Если нет в кэше — загружаем из сети (fallback)
+            Log.d("Repository", "Not in cache, fetching from network: $exhibitId")
+
+            val details = api.getExhibitDetailsRpc(
+                apiKey = headers["apikey"]!!,
+                token = headers["Authorization"]!!,
+                params = mapOf("p_exhibit_id" to exhibitId)
+            )
+
+            val exhibit = Exhibit(
+                id = details.exhibit_id,
+                title = details.name,
+                description = details.description,
+                creationYear = details.creation_year,
+                hallId = details.current_hall_id,
+                museumId = details.museum_id,
+                authorId = null,
+                authorName = details.author_name,
+                museumName = details.museum_name
+            )
+
+            // 🔥 Сохраняем в кэш для будущего использования
+            DataCache.updateExhibit(exhibit)
+
+            Result.success(exhibit)
+
+        } catch (e: Exception) {
+            Log.e("Repository", "Error loading exhibit $exhibitId", e)
+            Result.failure(e)
+        }
+    }
+    fun updateExhibitInCache(exhibit: Exhibit) {
+        DataCache.updateExhibit(exhibit)
+    }
+    fun removeExhibitFromCache(exhibitId: Int) {
+        DataCache.removeExhibit(exhibitId)
     }
 
     // Конвертация с добавлением связанных данных (если нужно)
@@ -249,6 +330,12 @@ class ExhibitRepository {
     }
 }
 data class AuthorSpinnerItem(
+    val id: Int,
+    val name: String
+) {
+    override fun toString(): String = name  // Для отображения в Spinner
+}
+data class MuseumSpinnerItem(
     val id: Int,
     val name: String
 ) {

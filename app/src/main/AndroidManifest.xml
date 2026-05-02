@@ -24,7 +24,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".RegistrationActivity"
+            android:name=".ui.auth.LoginActivity"
             android:exported="false" />
         <activity
             android:name=".ui.exhibits.ExhibitManagementActivity"
@@ -49,6 +49,11 @@
             android:exported="false"
             android:label="Добавить экспонат"
             android:parentActivityName=".ui.exhibits.ExhibitManagementActivity" />
+        <activity
+            android:name=".ui.exhibits.EditExhibitActivity"
+            android:exported="false"
+            android:label="Редактировать экспонат"
+            android:parentActivityName=".ui.exhibits.ExhibitDetailActivity" />
     </application>
 
 </manifest>

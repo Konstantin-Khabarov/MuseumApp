@@ -2,6 +2,7 @@ package com.example.museumapp.data.repository
 
 import com.example.museumapp.data.model.Author
 import com.example.museumapp.data.model.Exhibit
+import com.example.museumapp.data.model.Hall
 import com.example.museumapp.data.model.Museum
 import retrofit2.Response
 import retrofit2.http.Body
@@ -61,15 +62,13 @@ interface SupabaseApi {
         @Body params: SearchParams
     ): List<ExhibitRpcResponse>
 
-    @GET("rest/v1/exhibit")
-    suspend fun searchExhibits(
+    @POST("rest/v1/rpc/get_exhibit_details")
+    suspend fun getExhibitDetailsRpc(
         @Header("apikey") apiKey: String,
         @Header("Authorization") token: String,
-        @Header("Range") range: String = "0-19",
-        @Query("name.ilike") nameFilter: String? = null,
-        @Query("creation_year.gte") yearFrom: Int? = null,
-        @Query("creation_year.lte") yearTo: Int? = null
-    ): List<Exhibit>
+        @Body params: Map<String, Int>
+    ): ExhibitDetailResponse // Supabase RPC возвращает массив даже для 1 строки
+
     @POST("rest/v1/exhibit")
     suspend fun insertExhibit(
         @Header("apikey") apiKey: String,
@@ -86,20 +85,21 @@ interface SupabaseApi {
         @Body relation: ExhibitCreatorRequest
     ): List<ExhibitCreatorResponse>
 
-    @PATCH("rest/v1/exhibit?id=eq.{id}")
-    suspend fun updateExhibit(
-        @Path("id") id: Int,
+    @POST("rest/v1/rpc/update_exhibit")
+    suspend fun updateExhibitRpc(
         @Header("apikey") apiKey: String,
         @Header("Authorization") token: String,
-        @Body exhibit: Exhibit
-    ): List<Exhibit>
+        @Header("Prefer") prefer: String = "return=representation",
+        @Body params: UpdateExhibitParams
+    ): ExhibitRpcResponse
 
-    @DELETE("rest/v1/exhibit?id=eq.{id}")
-    suspend fun deleteExhibit(
-        @Path("id") id: Int,
+    @POST("rest/v1/rpc/delete_exhibit_with_relations")
+    suspend fun deleteExhibitRpc(
         @Header("apikey") apiKey: String,
-        @Header("Authorization") token: String
-    ): Response<Unit>
+        @Header("Authorization") token: String,
+        @Header("Prefer") prefer: String = "return=representation",
+        @Body params: DeleteExhibitParams
+    ): Boolean
 
     // MUSEUMS
     @GET("rest/v1/museum?select=*")
@@ -107,6 +107,23 @@ interface SupabaseApi {
         @Header("apikey") apiKey: String,
         @Header("Authorization") token: String
     ): List<Museum>
+
+    // ==================== HALLS ====================
+
+    // Получение всех залов (для справочников)
+    @GET("rest/v1/hall?select=*")
+    suspend fun getAllHalls(
+        @Header("apikey") apiKey: String,
+        @Header("Authorization") token: String
+    ): List<Hall>
+
+    // 🔥 НОВЫЙ: Получение залов по музею (фильтрация на сервере)
+    @GET("rest/v1/hall")
+    suspend fun getHallsByMuseumId(
+        @Header("apikey") apiKey: String,
+        @Header("Authorization") token: String,
+        @Query("museum_id") museumIdFilter: String  // ← Обратите внимание: просто "museum_id"
+    ): List<Hall>
 }
 
 data class SearchParams(
@@ -142,7 +159,29 @@ data class ExhibitCreatorRequest(
     val creator_id: Int
 )
 
+data class ExhibitDetailResponse(
+    val exhibit_id: Int,
+    val name: String,
+    val description: String,
+    val creation_year: Int,
+    val current_hall_id: Int?,
+    val museum_id: Int?,
+    val museum_name: String?,
+    val author_name: String?
+)
+
 data class ExhibitCreatorResponse(
     val exhibit_id: Int,
     val creator_id: Int
+)
+data class DeleteExhibitParams(
+    val p_exhibit_id: Int
+)
+data class UpdateExhibitParams(
+    val p_exhibit_id: Int,
+    val p_name: String,
+    val p_description: String,
+    val p_creation_year: Int,
+    val p_museum_id: Int,
+    val p_hall_number: String
 )

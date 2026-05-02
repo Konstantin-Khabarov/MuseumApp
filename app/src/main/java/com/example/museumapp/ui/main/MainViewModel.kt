@@ -14,9 +14,9 @@ class MainViewModel : ViewModel() {
     val uiState: StateFlow<MainState> = _uiState.asStateFlow()
 
     // Обработка нажатий кнопок
-    fun onRegistrationClicked() {
+    fun onLoginClicked() {
         viewModelScope.launch {
-            _uiState.value = MainState.NavigateTo(NavigationDestination.Registration)
+            _uiState.value = MainState.NavigateTo(NavigationDestination.Login)
         }
     }
 
@@ -38,9 +38,9 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    fun onExhibitionsInfoClicked() {
+    fun onHallsInfoClicked() {
         viewModelScope.launch {
-            _uiState.value = MainState.NavigateTo(NavigationDestination.ExhibitionManagement)
+            _uiState.value = MainState.NavigateTo(NavigationDestination.HallManagement)
         }
     }
 

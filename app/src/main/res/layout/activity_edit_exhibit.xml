@@ -2,15 +2,13 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FAFAFA"
     android:orientation="vertical"
-    android:padding="16dp"
-    tools:context=".ui.exhibits.AddExhibitActivity">
+    android:padding="16dp">
 
-    <!-- Верхняя панель с кнопкой назад -->
+    <!-- Верхняя панель -->
     <LinearLayout
         android:id="@+id/topBar"
         android:layout_width="match_parent"
@@ -34,7 +32,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Добавить экспонат"
+            android:text="Редактировать экспонат"
             android:textColor="#2D3436"
             android:textSize="20sp"
             android:textStyle="bold"
@@ -58,19 +56,18 @@
             android:orientation="vertical"
             android:padding="20dp">
 
-            <!-- Название (обязательно) -->
+            <!-- Название -->
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-                app:helperText="* Обязательно">
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/editTextTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Название экспоната"
+                    android:hint="Название экспоната *"
                     android:inputType="text"
                     android:maxLines="1" />
 
@@ -89,7 +86,7 @@
                     android:layout_height="wrap_content"
                     android:hint="Описание"
                     android:inputType="textMultiLine"
-                    android:minLines="2"
+                    android:minLines="3"
                     android:gravity="top|start" />
 
             </com.google.android.material.textfield.TextInputLayout>
@@ -111,6 +108,7 @@
 
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- 🔥 Выбор музея (Spinner из кэша) -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -128,60 +126,37 @@
                 android:background="@android:drawable/btn_dropdown"
                 android:spinnerMode="dropdown" />
 
-
-            <TextView
-                android:id="@+id/textHallLabel"
+            <!-- 🔥 Номер зала (ручной ввод) -->
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Зал (опционально)"
-                android:textColor="#2D3436"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="8dp"
-                android:visibility="gone" />
-
-            <Spinner
-                android:id="@+id/spinnerHall"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
                 android:layout_marginBottom="20dp"
-                android:background="@android:drawable/btn_dropdown"
-                android:spinnerMode="dropdown"
-                android:visibility="gone" />
+                style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                android:hint="Номер зала (опционально)">
 
-            <!-- Выбор автора (Spinner) -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Автор"
-                android:textColor="#2D3436"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="8dp" />
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/editTextHallNumber"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:maxLines="1" />
 
-            <Spinner
-                android:id="@+id/spinnerAuthor"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginBottom="20dp"
-                android:background="@android:drawable/btn_dropdown"
-                android:spinnerMode="dropdown" />
+            </com.google.android.material.textfield.TextInputLayout>
 
             <!-- Кнопка сохранения -->
             <Button
                 android:id="@+id/btnSave"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Сохранить"
+                android:text="Сохранить изменения"
                 android:backgroundTint="#2196F3"
                 android:textColor="@android:color/white"
                 android:textSize="16sp" />
 
         </LinearLayout>
-
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- ProgressBar для загрузки -->
+    <!-- ProgressBar -->
     <ProgressBar
         android:id="@+id/progressBar"
         style="?android:attr/progressBarStyleLarge"

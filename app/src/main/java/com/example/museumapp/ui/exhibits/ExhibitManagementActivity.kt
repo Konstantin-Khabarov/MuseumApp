@@ -10,6 +10,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.museumapp.MuseumApp
+import com.example.museumapp.data.auth.AuthManager
 import com.example.museumapp.data.model.Exhibit
 import com.example.museumapp.databinding.ActivityExhibitManagementBinding
 import kotlinx.coroutines.launch
@@ -40,9 +41,9 @@ class ExhibitManagementActivity : AppCompatActivity() {
         binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
 
         // Блокируем кнопки во время загрузки
-        binding.btnSearch.isEnabled = !isLoading
-        binding.btnReset.isEnabled = !isLoading
-        binding.btnAdd.isEnabled = !isLoading
+        //binding.btnSearch.isEnabled = !isLoading
+        //binding.btnReset.isEnabled = !isLoading
+        //binding.btnAdd.isEnabled = !isLoading
     }
 
     private fun setupUI() {
@@ -119,13 +120,16 @@ class ExhibitManagementActivity : AppCompatActivity() {
             }
             is ExhibitState.ShowMessage -> {
                 showToast(state.message)
+                setLoading(false)
             }
             ExhibitState.NavigateBack -> {
                 finish()
             }
             ExhibitState.NavigateToAddExhibit -> {
                 navigateToAddExhibit()
+                viewModel.onEvent(ExhibitEvent.ClearNavigationState)
             }
+            else -> {}
         }
     }
 
@@ -140,12 +144,14 @@ class ExhibitManagementActivity : AppCompatActivity() {
             val title = binding.editTextExhibitName.text.toString()
             val authorName = binding.editTextAuthorName.text.toString()
             val museumName = binding.editTextMuseumName.text.toString()
-
-            setLoading(true)
-
-            viewModel.onEvent(
-                ExhibitEvent.SearchExhibits(title, authorName, museumName)
-            )
+            if (title == "" && authorName == "" && museumName == ""){
+                showToast("Введите критерии поиска")
+            } else{
+                setLoading(true)
+                viewModel.onEvent(
+                    ExhibitEvent.SearchExhibits(title, authorName, museumName)
+                )
+            }
         }
 
         // Кнопка сброса
@@ -160,7 +166,11 @@ class ExhibitManagementActivity : AppCompatActivity() {
 
         // Кнопка добавления нового экспоната
         binding.btnAdd.setOnClickListener {
-            viewModel.onEvent(ExhibitEvent.NavigateToAddExhibit)
+            if (AuthManager.isAuthenticated()) {
+                viewModel.onEvent(ExhibitEvent.NavigateToAddExhibit)
+            } else {
+                showToast("Для добавления экспоната необходимо войти в систему")
+            }
         }
     }
 
@@ -169,9 +179,8 @@ class ExhibitManagementActivity : AppCompatActivity() {
     }
 
     private fun navigateToAddExhibit() {
-        showToast("Добавление нового экспоната")
-        // TODO: Переход к AddExhibitActivity
-        // startActivity(Intent(this, AddExhibitActivity::class.java))
+        val intent = Intent(this, AddExhibitActivity::class.java)
+        startActivity(intent)
     }
 
     private fun showToast(message: String) {

@@ -7,10 +7,11 @@ sealed class MainState {
     data class NavigateTo(val destination: NavigationDestination) : MainState()
 }
 
-sealed class NavigationDestination {
-    object Registration : NavigationDestination()
-    object ExhibitManagement : NavigationDestination()
+sealed class NavigationDestination(val requiresAuth: Boolean = false) {
+    object Login : NavigationDestination()  // 🔥 Было Registration
+
+    object ExhibitManagement : NavigationDestination()  // 🔥 Требует авторизации
     object AuthorManagement : NavigationDestination()
     object MuseumManagement : NavigationDestination()
-    object ExhibitionManagement : NavigationDestination()
+    object HallManagement : NavigationDestination()
 }

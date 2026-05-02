@@ -58,4 +58,11 @@ dependencies {
     implementation(libs.navigation.ui.ktx)
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
+
+    implementation("io.github.jan-tennert.supabase:supabase-kt:2.0.0")
+    implementation("io.github.jan-tennert.supabase:postgrest-kt:2.0.0")
+    implementation("io.github.jan-tennert.supabase:gotrue-kt:2.0.0")
+    implementation("io.github.jan-tennert.supabase:storage-kt:2.0.0")
+    implementation("io.ktor:ktor-client-android:2.3.12")
+    implementation(libs.androidx.security.crypto.ktx)
 }
