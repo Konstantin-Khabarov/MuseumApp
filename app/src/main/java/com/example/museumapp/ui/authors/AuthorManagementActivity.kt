@@ -2,14 +2,17 @@ package com.example.museumapp.ui.authors
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.museumapp.MuseumApp
+import com.example.museumapp.data.auth.AuthManager
 import com.example.museumapp.data.model.Author
 import com.example.museumapp.databinding.ActivityAuthorManagementBinding
+import com.example.museumapp.ui.exhibits.ExhibitEvent
 import kotlinx.coroutines.launch
 
 class AuthorManagementActivity : AppCompatActivity() {
@@ -66,29 +69,48 @@ class AuthorManagementActivity : AppCompatActivity() {
     private fun handleState(state: AuthorState) {
         when (state) {
             is AuthorState.Idle -> {
+                setLoading(false)
                 // Ничего не делаем
+            }
+            is AuthorState.Loading -> {
+                // 🔥 Показываем индикатор загрузки
+                setLoading(true)
             }
             is AuthorState.Success -> {
                 showSearchResults(state.authors)
+                setLoading(false)
             }
             is AuthorState.Error -> {
                 showToast(state.message)
+                setLoading(false)
             }
             is AuthorState.ShowMessage -> {
                 showToast(state.message)
+                setLoading(false)
             }
             AuthorState.NavigateBack -> {
                 finish()
             }
             AuthorState.NavigateToAddAuthor -> {
                 navigateToAddAuthor()
+                viewModel.resetState()
+            }
+            AuthorState.AuthorAdded -> {
+                showToast("Автор добавлен")
+                viewModel.onEvent(AuthorEvent.LoadAllAuthors) // Обновить список
+                viewModel.resetState()
             }
             AuthorState.NavigateToEditAuthor -> {
                 navigateToEditAuthor()
             }
+            else -> {}
         }
     }
 
+
+    private fun setLoading(isLoading: Boolean) {
+        binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+    }
     private fun setupListeners() {
         binding.btnBackArrow.setOnClickListener {
             viewModel.onEvent(AuthorEvent.NavigateBack)
@@ -122,8 +144,8 @@ class AuthorManagementActivity : AppCompatActivity() {
     }
 
     private fun navigateToAddAuthor() {
-        showToast("Добавление нового автора")
-        // startActivity(Intent(this, AddAuthorActivity::class.java))
+        val intent = Intent(this, AddAuthorActivity::class.java)
+        startActivity(intent)
     }
 
     private fun navigateToEditAuthor() {

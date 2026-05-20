@@ -10,4 +10,11 @@ sealed class AuthorEvent {
     object AddAuthor : AuthorEvent()
     object EditAuthor : AuthorEvent()
     object NavigateBack : AuthorEvent()
+    data class SaveAuthor(
+        val name: String,
+        val biography: String?,
+        val birthDate: String?,
+        val deathDate: String?
+    ) : AuthorEvent()
+    data class DeleteAuthor(val authorId: Int) : AuthorEvent()
 }

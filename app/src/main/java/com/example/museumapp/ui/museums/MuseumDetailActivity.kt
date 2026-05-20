@@ -16,11 +16,17 @@ class MuseumDetailActivity : AppCompatActivity() {
     private val viewModel: MuseumViewModel by viewModels {
         MuseumViewModelFactory((application as MuseumApp).museumRepository)
     }
+    private fun setupToolbar() {
+        binding.btnBack.setOnClickListener {
+            finish()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMuseumDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        setupToolbar()
 
         val museum = Museum(
             id = intent.getIntExtra("museum_id", -1),

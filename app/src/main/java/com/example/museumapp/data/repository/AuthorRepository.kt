@@ -9,7 +9,6 @@ class AuthorRepository {
     suspend fun getAllAuthors(): List<Author> {
         val headers = SupabaseClient.getHeaders()
         val response = api.getAllCreators(headers["apikey"]!!, headers["Authorization"]!!)
-        //println("DEBUG: Supabase response = $response")
         return response
     }
 
@@ -23,13 +22,25 @@ class AuthorRepository {
         }
     }
 
-    suspend fun insertAuthor(author: Author): List<Author> {
-        val headers = SupabaseClient.getHeaders()
-        return api.insertCreator(
-            apiKey = headers["apikey"]!!,
-            token = headers["Authorization"]!!,
-            creator = author
-        )
+    suspend fun insertAuthor(author: Author): Result<Author> {
+        return try {
+            val headers = SupabaseClient.getHeaders()
+            android.util.Log.d("AUTH_DEBUG", "Is Authenticated: ${com.example.museumapp.data.auth.AuthManager.isAuthenticated()}")
+            android.util.Log.d("AUTH_DEBUG", "Auth Header: ${headers["Authorization"]?.take(30)}...") // Первые 30 символов
+            val response = api.insertCreator(
+                apiKey = headers["apikey"]!!,
+                token = headers["Authorization"]!!,
+                creator = author
+            )
+
+            if (response.isNotEmpty()) {
+                Result.success(response[0])
+            } else {
+                Result.failure(Exception("Пустой ответ от сервера"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     suspend fun updateAuthor(id: Int, author: Author): List<Author> {

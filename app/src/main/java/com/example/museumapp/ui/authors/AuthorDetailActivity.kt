@@ -16,11 +16,17 @@ class AuthorDetailActivity : AppCompatActivity() {
     private val viewModel: AuthorViewModel by viewModels {
         AuthorViewModelFactory((application as MuseumApp).authorRepository)
     }
+    private fun setupToolbar() {
+        binding.btnBack.setOnClickListener {
+            finish()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityAuthorDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        setupToolbar()
 
         val author = Author(
             id = intent.getIntExtra("author_id", -1),

@@ -2,6 +2,9 @@ package com.example.museumapp.ui.authors
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.museumapp.data.auth.AuthManager
+import com.example.museumapp.data.cache.DataCache
+import com.example.museumapp.data.model.Author
 import com.example.museumapp.data.repository.AuthorRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,13 +37,32 @@ class AuthorViewModel(
                 loadAllAuthors()
             }
             AuthorEvent.AddAuthor -> {
-                _uiState.value = AuthorState.NavigateToAddAuthor
+                if (AuthManager.isAuthenticated()) {
+                    _uiState.value = AuthorState.NavigateToAddAuthor
+                } else {
+                    _uiState.value = AuthorState.ShowMessage("Необходимо войти в систему")
+                }
             }
             AuthorEvent.EditAuthor -> {
-                _uiState.value = AuthorState.NavigateToEditAuthor
+                if (AuthManager.isAuthenticated()) {
+                    _uiState.value = AuthorState.NavigateToEditAuthor
+                } else {
+                    _uiState.value = AuthorState.ShowMessage("Необходимо войти в систему")
+                }
             }
             AuthorEvent.NavigateBack -> {
                 _uiState.value = AuthorState.NavigateBack
+            }
+            is AuthorEvent.SaveAuthor -> {
+                saveNewAuthor(
+                    name = event.name,
+                    biography = event.biography,
+                    birthDate = event.birthDate,
+                    deathDate = event.deathDate
+                )
+            }
+            is AuthorEvent.DeleteAuthor -> {
+                deleteAuthor(event.authorId)
             }
         }
     }
@@ -52,6 +74,40 @@ class AuthorViewModel(
                 _uiState.value = AuthorState.Success(authors)
             } catch (e: Exception) {
                 _uiState.value = AuthorState.Error("Ошибка загрузки: ${e.message}")
+            }
+        }
+    }
+
+    private fun saveNewAuthor(
+        name: String,
+        biography: String?,
+        birthDate: String?,
+        deathDate: String?
+    ) {
+        viewModelScope.launch {
+            _uiState.value = AuthorState.Loading
+
+            try {
+                // Создаём объект автора
+                val newAuthor = Author(
+                    id = 0, // ID назначит сервер
+                    name = name,
+                    biography = biography,
+                    birthDate = birthDate,
+                    deathDate = deathDate
+                )
+
+                // Отправляем в репозиторий
+                val result = authorRepository.insertAuthor(newAuthor)
+
+                result.onSuccess {
+                    DataCache.invalidateAuthors()
+                    _uiState.value = AuthorState.AuthorAdded
+                }.onFailure { error ->
+                    _uiState.value = AuthorState.Error("Ошибка: ${error.message}")
+                }
+            } catch (e: Exception) {
+                _uiState.value = AuthorState.Error("Ошибка: ${e.message}")
             }
         }
     }
@@ -80,6 +136,23 @@ class AuthorViewModel(
     private fun resetSearch() {
         currentName = ""
         loadAllAuthors()
+    }
+    
+    private fun deleteAuthor(id: Int) {
+        viewModelScope.launch {
+            _uiState.value = AuthorState.Loading
+            try {
+                authorRepository.deleteAuthor(id)
+                DataCache.invalidateAuthors()
+                _uiState.value = AuthorState.AuthorDeleted
+            } catch (e: Exception) {
+                _uiState.value = AuthorState.Error("Ошибка удаления: ${e.message}")
+            }
+        }
+    }
+    
+    fun resetState() {
+        _uiState.value = AuthorState.Idle
     }
 
     /*fun deleteAuthor(id: Int) {

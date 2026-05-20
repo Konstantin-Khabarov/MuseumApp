@@ -54,6 +54,11 @@
             android:exported="false"
             android:label="Редактировать экспонат"
             android:parentActivityName=".ui.exhibits.ExhibitDetailActivity" />
+        <activity
+            android:name=".ui.authors.AddAuthorActivity"
+            android:exported="false"
+            android:label="Добавить автора"
+            android:parentActivityName=".ui.authors.AuthorManagementActivity" />
     </application>
 
 </manifest>
