@@ -10,9 +10,12 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.museumapp.MuseumApp
+import com.example.museumapp.R
 import com.example.museumapp.data.auth.AuthManager
 import com.example.museumapp.data.model.Exhibit
 import com.example.museumapp.databinding.ActivityExhibitManagementBinding
+import com.example.museumapp.ui.authors.AuthorManagementActivity
+import com.example.museumapp.ui.museums.MuseumManagementActivity
 import kotlinx.coroutines.launch
 
 class ExhibitManagementActivity : AppCompatActivity() {
@@ -35,6 +38,12 @@ class ExhibitManagementActivity : AppCompatActivity() {
         setupUI()
         setupObservers()
         setupListeners()
+        setupBottomNav()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        binding.bottomNav.selectedItemId = R.id.nav_exhibits
     }
 
     private fun setLoading(isLoading: Boolean) {
@@ -181,6 +190,31 @@ class ExhibitManagementActivity : AppCompatActivity() {
     private fun navigateToAddExhibit() {
         val intent = Intent(this, AddExhibitActivity::class.java)
         startActivity(intent)
+    }
+
+    private fun setupBottomNav() {
+        binding.bottomNav.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_exhibits -> true
+                R.id.nav_authors -> {
+                    startActivity(Intent(this, AuthorManagementActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+                    })
+                    true
+                }
+                R.id.nav_museums -> {
+                    startActivity(Intent(this, MuseumManagementActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+                    })
+                    true
+                }
+                R.id.nav_halls -> {
+                    showToast("Залы в разработке")
+                    false
+                }
+                else -> false
+            }
+        }
     }
 
     private fun showToast(message: String) {

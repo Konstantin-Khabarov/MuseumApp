@@ -12,5 +12,6 @@ sealed class AuthorState {
     object NavigateToAddAuthor : AuthorState()
     object NavigateToEditAuthor : AuthorState()
     object AuthorAdded : AuthorState()
+    object AuthorUpdated : AuthorState()
     object AuthorDeleted : AuthorState()
 }

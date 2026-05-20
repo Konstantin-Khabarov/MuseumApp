@@ -41,135 +41,179 @@
 
     </LinearLayout>
 
-    <com.google.android.material.card.MaterialCardView
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="4dp"
-        android:layout_marginBottom="16dp"
-        app:cardBackgroundColor="@android:color/white"
-        app:strokeColor="#2196F3"
-        app:strokeWidth="1dp">
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="20dp">
-
-        <!-- Название экспоната -->
-        <TextView
-            android:id="@+id/textDetailName"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Название экспоната"
-            android:textColor="#2D3436"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="12dp" />
+            android:orientation="vertical">
 
-        <!-- Описание -->
-        <TextView
-            android:id="@+id/textDetailDescription"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Описание"
-            android:textColor="#666"
-            android:textSize="16sp"
-            android:lineSpacingExtra="4dp"
-            android:layout_marginBottom="16dp" />
+            <!-- Карточка с текстовой информацией -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="@android:color/white"
+                app:strokeColor="#2196F3"
+                app:strokeWidth="1dp">
 
-        <!-- Дата создания -->
-        <TextView
-            android:id="@+id/textDetailDate"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="#2D3436"
-            android:textSize="14sp"
-            android:layout_marginBottom="16dp" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="20dp">
 
-        <!-- Автор -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Автор:"
-            android:textColor="#2D3436"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="4dp" />
-        <TextView
-            android:id="@+id/textDetailAuthor"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Имя автора"
-            android:textColor="#666"
-            android:textSize="14sp"
-            android:layout_marginBottom="16dp" />
+                    <TextView
+                        android:id="@+id/textDetailName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Название экспоната"
+                        android:textColor="#2D3436"
+                        android:textSize="24sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="12dp" />
 
-        <!-- Музей -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Музей:"
-            android:textColor="#2D3436"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="4dp" />
-        <TextView
-            android:id="@+id/textDetailMuseum"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Название музея"
-            android:textColor="#666"
-            android:textSize="14sp"
-            android:layout_marginBottom="20dp" />
+                    <TextView
+                        android:id="@+id/textDetailDescription"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Описание"
+                        android:textColor="#666"
+                        android:textSize="16sp"
+                        android:lineSpacingExtra="4dp"
+                        android:layout_marginBottom="16dp" />
 
-    </LinearLayout>
-    </com.google.android.material.card.MaterialCardView>
+                    <TextView
+                        android:id="@+id/textDetailDate"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="#2D3436"
+                        android:textSize="14sp"
+                        android:layout_marginBottom="16dp" />
 
-    <!-- Кнопки в одной строке -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:paddingTop="8dp">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Автор:"
+                        android:textColor="#2D3436"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="4dp" />
+                    <TextView
+                        android:id="@+id/textDetailAuthor"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Имя автора"
+                        android:textColor="#666"
+                        android:textSize="14sp"
+                        android:layout_marginBottom="16dp" />
 
-        <!-- ✏️ Редактировать -->
-        <ImageButton
-            android:id="@+id/btnEdit"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:layout_marginEnd="8dp"
-            android:src="@drawable/edit"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:scaleType="centerInside"
-            android:contentDescription="Редактировать"
-            app:tint="#000000" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Музей:"
+                        android:textColor="#2D3436"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="4dp" />
+                    <TextView
+                        android:id="@+id/textDetailMuseum"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Название музея"
+                        android:textColor="#666"
+                        android:textSize="14sp"
+                        android:layout_marginBottom="4dp" />
 
-        <!-- 🗑️ Удалить -->
-        <ImageButton
-            android:id="@+id/btnDelete"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:layout_marginEnd="8dp"
-            android:src="@drawable/delete"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:scaleType="centerInside"
-            android:contentDescription="Удалить"
-            app:tint="#000000"
-            android:layout_marginStart="24dp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
-        <ProgressBar
-            android:id="@+id/progressBar"
-            style="?android:attr/progressBarStyleLarge"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:visibility="gone"
-            android:indeterminateTint="#F44336"
-            android:layout_marginTop="20dp" />
+            <!-- Карточка с изображением экспоната -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="@android:color/white"
+                app:strokeColor="#2196F3"
+                app:strokeWidth="1dp">
 
-    </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Изображение"
+                        android:textColor="#2D3436"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="12dp" />
+
+                    <ImageView
+                        android:id="@+id/imageViewExhibit"
+                        android:layout_width="match_parent"
+                        android:layout_height="240dp"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_no_image"
+                        android:contentDescription="Изображение экспоната" />
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Кнопки действий -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:paddingTop="4dp"
+                android:paddingBottom="16dp">
+
+                <ImageButton
+                    android:id="@+id/btnEdit"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:layout_marginEnd="8dp"
+                    android:src="@drawable/edit"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:scaleType="centerInside"
+                    android:contentDescription="Редактировать"
+                    app:tint="#000000" />
+
+                <ImageButton
+                    android:id="@+id/btnDelete"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:layout_marginStart="24dp"
+                    android:src="@drawable/delete"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:scaleType="centerInside"
+                    android:contentDescription="Удалить"
+                    app:tint="#000000" />
+
+                <ProgressBar
+                    android:id="@+id/progressBar"
+                    style="?android:attr/progressBarStyleLarge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone"
+                    android:indeterminateTint="#F44336"
+                    android:layout_marginTop="20dp" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
 
 </LinearLayout>

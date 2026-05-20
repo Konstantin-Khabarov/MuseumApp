@@ -1,6 +1,8 @@
 package com.example.museumapp
 
 import android.app.Application
+import coil.Coil
+import coil.ImageLoader
 import com.example.museumapp.data.cache.DataCache
 import com.example.museumapp.data.repository.AuthorRepository
 import com.example.museumapp.data.repository.ExhibitRepository
@@ -9,6 +11,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
 
 
 class MuseumApp : Application() {
@@ -20,8 +23,26 @@ class MuseumApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        // 🔥 Предзагружаем справочники в фоне
+        setupCoil()
         preloadReferenceData()
+    }
+
+    private fun setupCoil() {
+        val okHttpClient = OkHttpClient.Builder()
+            .addInterceptor { chain ->
+                val request = chain.request().newBuilder()
+                    .header("User-Agent", "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36")
+                    .build()
+                chain.proceed(request)
+            }
+            .build()
+
+        Coil.setImageLoader(
+            ImageLoader.Builder(this)
+                .okHttpClient(okHttpClient)
+                .crossfade(true)
+                .build()
+        )
     }
 
     private fun preloadReferenceData() {

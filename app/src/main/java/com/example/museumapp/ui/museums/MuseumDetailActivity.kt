@@ -1,5 +1,7 @@
 package com.example.museumapp.ui.museums
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.viewModels
@@ -32,7 +34,8 @@ class MuseumDetailActivity : AppCompatActivity() {
             id = intent.getIntExtra("museum_id", -1),
             name = intent.getStringExtra("museum_name") ?: "",
             address = intent.getStringExtra("museum_address") ?: "",
-            city = intent.getStringExtra("museum_city") ?: ""
+            city = intent.getStringExtra("museum_city") ?: "",
+            website = intent.getStringExtra("museum_website")
         )
 
         displayMuseum(museum)
@@ -59,6 +62,19 @@ class MuseumDetailActivity : AppCompatActivity() {
         binding.textDetailName.text = museum.name
         binding.textDetailCity.text = museum.city
         binding.textDetailAddress.text = museum.address
+
+        val website = museum.website
+        if (!website.isNullOrBlank()) {
+            binding.textDetailWebsite.text = website
+            binding.textDetailWebsite.setOnClickListener {
+                val url = if (website.startsWith("http")) website else "https://$website"
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+            }
+        } else {
+            binding.textDetailWebsite.text = "Сайт не указан"
+            binding.textDetailWebsite.isClickable = false
+            binding.textDetailWebsite.setTextColor(android.graphics.Color.parseColor("#999999"))
+        }
     }
 
     private fun showToast(message: String) {

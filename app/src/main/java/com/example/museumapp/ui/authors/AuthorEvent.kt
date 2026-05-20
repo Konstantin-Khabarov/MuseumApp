@@ -14,7 +14,16 @@ sealed class AuthorEvent {
         val name: String,
         val biography: String?,
         val birthDate: String?,
-        val deathDate: String?
+        val deathDate: String?,
+        val photoUrl: String? = null
+    ) : AuthorEvent()
+    data class UpdateAuthor(
+        val authorId: Int,
+        val name: String,
+        val biography: String?,
+        val birthDate: String?,
+        val deathDate: String?,
+        val photoUrl: String?
     ) : AuthorEvent()
     data class DeleteAuthor(val authorId: Int) : AuthorEvent()
 }

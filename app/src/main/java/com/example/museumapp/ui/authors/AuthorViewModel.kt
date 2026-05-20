@@ -58,7 +58,18 @@ class AuthorViewModel(
                     name = event.name,
                     biography = event.biography,
                     birthDate = event.birthDate,
-                    deathDate = event.deathDate
+                    deathDate = event.deathDate,
+                    photoUrl = event.photoUrl
+                )
+            }
+            is AuthorEvent.UpdateAuthor -> {
+                updateAuthor(
+                    authorId = event.authorId,
+                    name = event.name,
+                    biography = event.biography,
+                    birthDate = event.birthDate,
+                    deathDate = event.deathDate,
+                    photoUrl = event.photoUrl
                 )
             }
             is AuthorEvent.DeleteAuthor -> {
@@ -82,27 +93,55 @@ class AuthorViewModel(
         name: String,
         biography: String?,
         birthDate: String?,
-        deathDate: String?
+        deathDate: String?,
+        photoUrl: String? = null
     ) {
         viewModelScope.launch {
             _uiState.value = AuthorState.Loading
-
             try {
-                // Создаём объект автора
                 val newAuthor = Author(
-                    id = 0, // ID назначит сервер
+                    id = 0,
                     name = name,
                     biography = biography,
                     birthDate = birthDate,
-                    deathDate = deathDate
+                    deathDate = deathDate,
+                    photoUrl = photoUrl
                 )
-
-                // Отправляем в репозиторий
                 val result = authorRepository.insertAuthor(newAuthor)
-
                 result.onSuccess {
                     DataCache.invalidateAuthors()
                     _uiState.value = AuthorState.AuthorAdded
+                }.onFailure { error ->
+                    _uiState.value = AuthorState.Error("Ошибка: ${error.message}")
+                }
+            } catch (e: Exception) {
+                _uiState.value = AuthorState.Error("Ошибка: ${e.message}")
+            }
+        }
+    }
+
+    private fun updateAuthor(
+        authorId: Int,
+        name: String,
+        biography: String?,
+        birthDate: String?,
+        deathDate: String?,
+        photoUrl: String?
+    ) {
+        viewModelScope.launch {
+            _uiState.value = AuthorState.Loading
+            try {
+                val result = authorRepository.updateAuthor(
+                    id = authorId,
+                    name = name,
+                    biography = biography,
+                    birthDate = birthDate,
+                    deathDate = deathDate,
+                    photoUrl = photoUrl
+                )
+                result.onSuccess {
+                    DataCache.invalidateAuthors()
+                    _uiState.value = AuthorState.AuthorUpdated
                 }.onFailure { error ->
                     _uiState.value = AuthorState.Error("Ошибка: ${error.message}")
                 }

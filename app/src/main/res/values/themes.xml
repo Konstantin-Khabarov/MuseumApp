@@ -3,6 +3,16 @@
     <style name="Base.Theme.MuseumApp" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <!-- Основные цвета -->
+        <item name="colorPrimary">#0720F4</item>
+        <item name="colorOnPrimary">@color/white</item>
+
+        <!-- 🔥 Цвет текста для полей ввода -->
+        <item name="android:textColorPrimary">#000000</item>
+        <item name="android:textColorSecondary">#757575</item>
+
+        <!-- Цвета для TextInputLayout -->
+        <item name="colorOnSurface">#000000</item>
     </style>
 
     <style name="Theme.MuseumApp" parent="Base.Theme.MuseumApp" />

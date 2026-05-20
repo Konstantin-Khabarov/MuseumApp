@@ -89,7 +89,30 @@
                 android:text="Адрес"
                 android:textColor="#666"
                 android:textSize="14sp"
-                android:layout_marginBottom="20dp" />
+                android:layout_marginBottom="16dp" />
+
+            <!-- Веб-сайт -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Веб-сайт:"
+                android:textColor="#2D3436"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp" />
+
+            <TextView
+                android:id="@+id/textDetailWebsite"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Сайт не указан"
+                android:textColor="#2196F3"
+                android:textSize="14sp"
+                android:layout_marginBottom="4dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackground"
+                android:paddingVertical="4dp" />
 
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>

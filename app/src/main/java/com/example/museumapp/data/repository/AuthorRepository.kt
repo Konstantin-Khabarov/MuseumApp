@@ -1,5 +1,6 @@
 package com.example.museumapp.data.repository
 
+import android.util.Log
 import com.example.museumapp.data.model.Author
 import kotlinx.coroutines.delay
 
@@ -33,24 +34,39 @@ class AuthorRepository {
                 creator = author
             )
 
-            if (response.isNotEmpty()) {
-                Result.success(response[0])
-            } else {
-                Result.failure(Exception("Пустой ответ от сервера"))
-            }
+            Result.success(if (response.isNotEmpty()) response[0] else author)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    suspend fun updateAuthor(id: Int, author: Author): List<Author> {
-        val headers = SupabaseClient.getHeaders()
-        return api.updateCreator(
-            id = id,
-            apiKey = headers["apikey"]!!,
-            token = headers["Authorization"]!!,
-            creator = author
-        )
+    suspend fun updateAuthor(
+        id: Int,
+        name: String,
+        biography: String?,
+        birthDate: String?,
+        deathDate: String?,
+        photoUrl: String?
+    ): Result<Author> {
+        return try {
+            val headers = SupabaseClient.getHeaders()
+            val updated = api.updateCreatorRpc(
+                apiKey = headers["apikey"]!!,
+                token = headers["Authorization"]!!,
+                params = UpdateCreatorParams(
+                    p_creator_id = id,
+                    p_name = name,
+                    p_biography = biography,
+                    p_birth_date = birthDate,
+                    p_death_date = deathDate,
+                    p_photo_url = photoUrl
+                )
+            )
+            Result.success(updated)
+        } catch (e: Exception) {
+            Log.e("AuthorRepository", "Update error: ${e.message}", e)
+            Result.failure(e)
+        }
     }
 
     suspend fun deleteAuthor(id: Int) {

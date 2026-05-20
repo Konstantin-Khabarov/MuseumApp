@@ -10,5 +10,7 @@ data class Museum(
     @SerializedName("address")
     val address: String,
     @SerializedName("city")
-    val city: String
+    val city: String,
+    @SerializedName("website")
+    val website: String? = null
 )

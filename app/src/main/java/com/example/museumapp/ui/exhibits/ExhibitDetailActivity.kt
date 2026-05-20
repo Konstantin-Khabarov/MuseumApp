@@ -8,7 +8,10 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import coil.load
+import coil.transform.RoundedCornersTransformation
 import com.example.museumapp.MuseumApp
+import com.example.museumapp.R
 import com.example.museumapp.data.auth.AuthManager
 import com.example.museumapp.data.model.Exhibit
 import com.example.museumapp.databinding.ActivityExhibitDetailBinding
@@ -130,10 +133,37 @@ class ExhibitDetailActivity : AppCompatActivity() {
         binding.textDetailName.text = exhibit.title
         binding.textDetailDescription.text = exhibit.description
         binding.textDetailDate.text = "Год: ${exhibit.creationYear}"
-
-        //  Теперь эти поля ТОЧНО не будут null, если они были в поиске
         binding.textDetailAuthor.text = exhibit.authorName ?: "Автор не указан"
         binding.textDetailMuseum.text = exhibit.museumName ?: "Музей не указан"
+
+        android.util.Log.d("IMG_DEBUG", "updateUI: exhibit id=${exhibit.id} imageUrl='${exhibit.imageUrl}'")
+
+        if (!exhibit.imageUrl.isNullOrBlank()) {
+            android.util.Log.d("IMG_DEBUG", "Coil: starting load for url='${exhibit.imageUrl}'")
+            binding.imageViewExhibit.scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
+            binding.imageViewExhibit.load(exhibit.imageUrl) {
+                crossfade(true)
+                placeholder(R.drawable.ic_no_image)
+                error(R.drawable.ic_no_image)
+                transformations(RoundedCornersTransformation(12f))
+                listener(
+                    onStart = {
+                        android.util.Log.d("IMG_DEBUG", "Coil: onStart")
+                    },
+                    onSuccess = { _, _ ->
+                        android.util.Log.d("IMG_DEBUG", "Coil: onSuccess — image loaded!")
+                    },
+                    onError = { _, result ->
+                        android.util.Log.e("IMG_DEBUG", "Coil: onError — ${result.throwable}")
+                        binding.imageViewExhibit.scaleType = android.widget.ImageView.ScaleType.CENTER
+                    }
+                )
+            }
+        } else {
+            android.util.Log.d("IMG_DEBUG", "imageUrl is null/blank — showing placeholder")
+            binding.imageViewExhibit.scaleType = android.widget.ImageView.ScaleType.CENTER
+            binding.imageViewExhibit.setImageResource(R.drawable.ic_no_image)
+        }
     }
 
     private fun displayExhibit(exhibit: Exhibit) {

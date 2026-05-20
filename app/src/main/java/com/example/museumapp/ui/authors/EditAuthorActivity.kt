@@ -7,56 +7,70 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.museumapp.MuseumApp
-import com.example.museumapp.databinding.ActivityAddAuthorBinding
+import com.example.museumapp.data.auth.AuthManager
+import com.example.museumapp.databinding.ActivityEditAuthorBinding
 import kotlinx.coroutines.launch
 
-class AddAuthorActivity : AppCompatActivity() {
+class EditAuthorActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityAddAuthorBinding
+    private lateinit var binding: ActivityEditAuthorBinding
     private val viewModel: AuthorViewModel by viewModels {
         AuthorViewModelFactory((application as MuseumApp).authorRepository)
     }
 
+    private var authorId: Int = -1
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityAddAuthorBinding.inflate(layoutInflater)
+        binding = ActivityEditAuthorBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        authorId = intent.getIntExtra("author_id", -1)
+        if (authorId == -1) {
+            showToast("Ошибка: не передан ID автора")
+            finish()
+            return
+        }
+
+        fillForm()
         setupToolbar()
         setupListeners()
         observeViewModel()
     }
 
+    private fun fillForm() {
+        binding.editTextName.setText(intent.getStringExtra("author_name") ?: "")
+        binding.editTextBiography.setText(intent.getStringExtra("author_bio") ?: "")
+        binding.editTextBirthDate.setText(intent.getStringExtra("author_birth_date") ?: "")
+        binding.editTextDeathDate.setText(intent.getStringExtra("author_death_date") ?: "")
+        binding.editTextPhotoUrl.setText(intent.getStringExtra("author_photo_url") ?: "")
+    }
+
     private fun setupToolbar() {
-        binding.btnBack.setOnClickListener {
-            finish()
-        }
+        binding.btnBack.setOnClickListener { finish() }
     }
 
     private fun setupListeners() {
         binding.btnSave.setOnClickListener {
+            if (!AuthManager.isAuthenticated()) {
+                showToast("Для редактирования необходимо войти в систему")
+                return@setOnClickListener
+            }
             val name = binding.editTextName.text.toString().trim()
-            val biography = binding.editTextBiography.text.toString().trim().takeIf { it.isNotBlank() }
-            val birthDate = binding.editTextBirthDate.text.toString().trim().takeIf { it.isNotBlank() }
-            val deathDate = binding.editTextDeathDate.text.toString().trim().takeIf { it.isNotBlank() }
-
-            // Валидация
             if (name.isEmpty()) {
                 binding.editTextName.error = "Обязательное поле"
                 binding.editTextName.requestFocus()
                 return@setOnClickListener
             }
 
-            // Отправляем событие в ViewModel
-            val photoUrl = binding.editTextPhotoUrl.text.toString().trim().takeIf { it.isNotBlank() }
-
             viewModel.onEvent(
-                AuthorEvent.SaveAuthor(
+                AuthorEvent.UpdateAuthor(
+                    authorId = authorId,
                     name = name,
-                    biography = biography,
-                    birthDate = birthDate,
-                    deathDate = deathDate,
-                    photoUrl = photoUrl
+                    biography = binding.editTextBiography.text.toString().trim().takeIf { it.isNotBlank() },
+                    birthDate = binding.editTextBirthDate.text.toString().trim().takeIf { it.isNotBlank() },
+                    deathDate = binding.editTextDeathDate.text.toString().trim().takeIf { it.isNotBlank() },
+                    photoUrl = binding.editTextPhotoUrl.text.toString().trim().takeIf { it.isNotBlank() }
                 )
             )
         }
@@ -66,16 +80,15 @@ class AddAuthorActivity : AppCompatActivity() {
         lifecycleScope.launch {
             viewModel.uiState.collect { state ->
                 when (state) {
-                    is AuthorState.Loading -> {
-                        setLoading(true)
+                    is AuthorState.Loading -> setLoading(true)
+                    is AuthorState.AuthorUpdated -> {
+                        showToast("Автор обновлён")
+                        setResult(RESULT_OK)
+                        finish()
                     }
                     is AuthorState.Error -> {
                         showToast(state.message)
                         setLoading(false)
-                    }
-                    is AuthorState.AuthorAdded -> {
-                        showToast("Автор добавлен")
-                        finish()
                     }
                     else -> {}
                 }

@@ -8,8 +8,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.museumapp.MuseumApp
+import com.example.museumapp.R
 import com.example.museumapp.data.model.Museum
 import com.example.museumapp.databinding.ActivityMuseumManagementBinding
+import com.example.museumapp.ui.authors.AuthorManagementActivity
+import com.example.museumapp.ui.exhibits.ExhibitManagementActivity
 import com.example.museumapp.ui.museums.MuseumAdapter
 import com.example.museumapp.ui.museums.MuseumDetailActivity
 import kotlinx.coroutines.launch
@@ -32,6 +35,12 @@ class MuseumManagementActivity : AppCompatActivity() {
         setupUI()
         setupObservers()
         setupListeners()
+        setupBottomNav()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        binding.bottomNav.selectedItemId = R.id.nav_museums
     }
 
     private fun setupUI() {
@@ -49,6 +58,7 @@ class MuseumManagementActivity : AppCompatActivity() {
                 putExtra("museum_name", museum.name)
                 putExtra("museum_city", museum.city)
                 putExtra("museum_address", museum.address)
+                putExtra("museum_website", museum.website)
             }
             startActivity(intent)
         }
@@ -132,6 +142,31 @@ class MuseumManagementActivity : AppCompatActivity() {
     private fun navigateToEditMuseum() {
         showToast("Редактирование информации о музее")
         // startActivity(Intent(this, EditMuseumActivity::class.java))
+    }
+
+    private fun setupBottomNav() {
+        binding.bottomNav.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_museums -> true
+                R.id.nav_exhibits -> {
+                    startActivity(Intent(this, ExhibitManagementActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+                    })
+                    true
+                }
+                R.id.nav_authors -> {
+                    startActivity(Intent(this, AuthorManagementActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+                    })
+                    true
+                }
+                R.id.nav_halls -> {
+                    showToast("Залы в разработке")
+                    false
+                }
+                else -> false
+            }
+        }
     }
 
     private fun showToast(message: String) {

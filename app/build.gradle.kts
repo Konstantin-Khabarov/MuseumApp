@@ -65,4 +65,5 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:storage-kt:2.0.0")
     implementation("io.ktor:ktor-client-android:2.3.12")
     implementation(libs.androidx.security.crypto.ktx)
+    implementation("io.coil-kt:coil:2.6.0")
 }

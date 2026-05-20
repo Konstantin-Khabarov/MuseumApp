@@ -12,5 +12,7 @@ data class Author(
     @SerializedName("birth_date")
     val birthDate: String?,
     @SerializedName("death_date")
-    val deathDate: String?
+    val deathDate: String?,
+    @SerializedName("photo_url")
+    val photoUrl: String? = null
 )

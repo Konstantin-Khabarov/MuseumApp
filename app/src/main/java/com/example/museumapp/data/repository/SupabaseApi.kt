@@ -31,13 +31,21 @@ interface SupabaseApi {
         @Body creator: Author
     ): List<Author>
 
-    @PATCH("rest/v1/creator?id=eq.{id}")
+    @PATCH("rest/v1/creator")
     suspend fun updateCreator(
-        @Path("id") id: Int,
+        @Query("creator_id") creatorIdFilter: String,
         @Header("apikey") apiKey: String,
         @Header("Authorization") token: String,
-        @Body creator: Author
+        @Header("Prefer") prefer: String = "return=representation",
+        @Body creator: AuthorUpdateRequest
     ): List<Author>
+
+    @POST("rest/v1/rpc/update_creator")
+    suspend fun updateCreatorRpc(
+        @Header("apikey") apiKey: String,
+        @Header("Authorization") token: String,
+        @Body params: UpdateCreatorParams
+    ): Author
 
     @DELETE("rest/v1/creator?id=eq.{id}")
     suspend fun deleteCreator(
@@ -143,7 +151,8 @@ data class ExhibitRpcResponse(
     val creator_ids: List<Int>?,
     val museum_id: Int?,
     val author_name: String?,
-    val museum_name: String?
+    val museum_name: String?,
+    val image_url: String? = null
 )
 
 data class ExhibitInsertRequest(
@@ -167,13 +176,31 @@ data class ExhibitDetailResponse(
     val current_hall_id: Int?,
     val museum_id: Int?,
     val museum_name: String?,
-    val author_name: String?
+    val author_name: String?,
+    val image_url: String? = null
 )
 
 data class ExhibitCreatorResponse(
     val exhibit_id: Int,
     val creator_id: Int
 )
+data class AuthorUpdateRequest(
+    val name: String,
+    val biography: String?,
+    val birth_date: String?,
+    val death_date: String?,
+    val photo_url: String?
+)
+
+data class UpdateCreatorParams(
+    val p_creator_id: Int,
+    val p_name: String,
+    val p_biography: String?,
+    val p_birth_date: String?,
+    val p_death_date: String?,
+    val p_photo_url: String?
+)
+
 data class DeleteExhibitParams(
     val p_exhibit_id: Int
 )

@@ -21,11 +21,19 @@ class ExhibitRepository {
         val end = start + pageSize - 1
         val range = "$start-$end"
 
-        return api.getAllExhibits(
+        val exhibits = api.getAllExhibits(
             apiKey = headers["apikey"]!!,
             token = headers["Authorization"]!!,
-            range = range  // ← Это критично!
+            range = range
         ).map { it.toExhibitWithRelations() }
+
+        Log.d("IMG_DEBUG", "getExhibitsPage: loaded ${exhibits.size} exhibits")
+        exhibits.forEach { e ->
+            Log.d("IMG_DEBUG", "  exhibit id=${e.id} name='${e.title}' imageUrl=${e.imageUrl}")
+        }
+
+        DataCache.cacheExhibits(exhibits, clearPrevious = (page == 0))
+        return exhibits
     }
 
     suspend fun searchExhibits(
@@ -56,9 +64,11 @@ class ExhibitRepository {
                 params = params
             )
 
-            Log.d("Repository", "RPC returned ${rpcResponse.size} items")
+            Log.d("IMG_DEBUG", "searchExhibits RPC returned ${rpcResponse.size} items")
+            rpcResponse.forEach { rpc ->
+                Log.d("IMG_DEBUG", "  rpc id=${rpc.exhibit_id} name='${rpc.name}' image_url=${rpc.image_url}")
+            }
 
-            // Конвертируем в модель Exhibit
             val exhibits = rpcResponse.map { rpc ->
                 Exhibit(
                     id = rpc.exhibit_id,
@@ -69,7 +79,8 @@ class ExhibitRepository {
                     museumId = rpc.museum_id,
                     authorId = rpc.creator_ids?.firstOrNull(),
                     authorName = rpc.author_name,
-                    museumName = rpc.museum_name
+                    museumName = rpc.museum_name,
+                    imageUrl = rpc.image_url
                 )
             }
 
@@ -282,18 +293,19 @@ class ExhibitRepository {
             val cached = DataCache.getExhibit(exhibitId) { null } // loader = null, т.к. не загружаем автоматически
 
             if (cached != null) {
-                Log.d("Repository", "Found exhibit $exhibitId in DataCache")
+                Log.d("IMG_DEBUG", "getExhibitById: CACHE HIT id=$exhibitId imageUrl=${cached.imageUrl}")
                 return Result.success(cached)
             }
 
-            // 🔥 2. Если нет в кэше — загружаем из сети (fallback)
-            Log.d("Repository", "Not in cache, fetching from network: $exhibitId")
+            Log.d("IMG_DEBUG", "getExhibitById: CACHE MISS id=$exhibitId — fetching via RPC")
 
             val details = api.getExhibitDetailsRpc(
                 apiKey = headers["apikey"]!!,
                 token = headers["Authorization"]!!,
                 params = mapOf("p_exhibit_id" to exhibitId)
             )
+
+            Log.d("IMG_DEBUG", "getExhibitById: RPC response image_url=${details.image_url}")
 
             val exhibit = Exhibit(
                 id = details.exhibit_id,
@@ -304,7 +316,8 @@ class ExhibitRepository {
                 museumId = details.museum_id,
                 authorId = null,
                 authorName = details.author_name,
-                museumName = details.museum_name
+                museumName = details.museum_name,
+                imageUrl = details.image_url
             )
 
             // 🔥 Сохраняем в кэш для будущего использования

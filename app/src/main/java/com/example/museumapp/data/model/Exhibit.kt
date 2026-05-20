@@ -18,5 +18,6 @@ data class Exhibit(
     val authorName: String? = null,
     val museumName: String? = null,
 
+    @SerializedName("image_url")
     val imageUrl: String? = null
 )

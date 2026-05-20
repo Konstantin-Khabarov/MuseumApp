@@ -127,17 +127,4 @@ object DataCache {
     fun invalidateAuthors() {
         _authors = null
     }
-
-    // 🔥 Очистить залы конкретного музея
-    /*fun invalidateHalls(museumId: Int) {
-        _halls.remove(museumId)
-    }*/
-
-    // 🔥 Полная очистка (если нужно)
-    /*fun invalidateAll() {
-        _museums = null
-        _authors = null
-        _halls.clear()
-        invalidateExhibits()
-    }*/
 }

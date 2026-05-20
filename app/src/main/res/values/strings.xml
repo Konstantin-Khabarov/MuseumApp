@@ -5,7 +5,7 @@
     <string name="btnExhibit">Экспонаты</string>
     <string name="btnAuthor">Авторы</string>
     <string name="btnMuseum">Музеи</string>
-    <string name="btnExhibition">Выставки</string>
+    <string name="btnExhibition">Залы</string>
     <string name="btnConfirm">Войти</string>
     <string name="textRegistration">Вход в систему</string>
     <string name="hintLogin">Логин</string>
