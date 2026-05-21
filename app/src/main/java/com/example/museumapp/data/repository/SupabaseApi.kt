@@ -11,7 +11,6 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.POST
-import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface SupabaseApi {
@@ -47,11 +46,11 @@ interface SupabaseApi {
         @Body params: UpdateCreatorParams
     ): Author
 
-    @DELETE("rest/v1/creator?id=eq.{id}")
-    suspend fun deleteCreator(
-        @Path("id") id: Int,
+    @POST("rest/v1/rpc/delete_creator_with_relations")
+    suspend fun deleteCreatorRpc(
         @Header("apikey") apiKey: String,
-        @Header("Authorization") token: String
+        @Header("Authorization") token: String,
+        @Body params: DeleteCreatorParams
     ): Response<Unit>
 
     // EXHIBITS
@@ -76,6 +75,13 @@ interface SupabaseApi {
         @Header("Authorization") token: String,
         @Body params: Map<String, Int>
     ): ExhibitDetailResponse // Supabase RPC возвращает массив даже для 1 строки
+
+    @POST("rest/v1/rpc/add_exhibit")
+    suspend fun addExhibitRpc(
+        @Header("apikey") apiKey: String,
+        @Header("Authorization") token: String,
+        @Body params: AddExhibitParams
+    ): Int
 
     @POST("rest/v1/exhibit")
     suspend fun insertExhibit(
@@ -110,6 +116,48 @@ interface SupabaseApi {
     ): Boolean
 
     // MUSEUMS
+    @POST("rest/v1/rpc/update_hall")
+    suspend fun updateHallRpc(
+        @Header("apikey") apiKey: String,
+        @Header("Authorization") token: String,
+        @Body params: UpdateHallParams
+    ): Response<Unit>
+
+    @POST("rest/v1/rpc/delete_hall_with_relations")
+    suspend fun deleteHallRpc(
+        @Header("apikey") apiKey: String,
+        @Header("Authorization") token: String,
+        @Body params: DeleteHallParams
+    ): Response<Unit>
+
+    @POST("rest/v1/rpc/add_hall")
+    suspend fun addHallRpc(
+        @Header("apikey") apiKey: String,
+        @Header("Authorization") token: String,
+        @Body params: AddHallParams
+    ): Int
+
+    @POST("rest/v1/rpc/add_museum")
+    suspend fun addMuseumRpc(
+        @Header("apikey") apiKey: String,
+        @Header("Authorization") token: String,
+        @Body params: AddMuseumParams
+    ): Int
+
+    @POST("rest/v1/rpc/update_museum")
+    suspend fun updateMuseumRpc(
+        @Header("apikey") apiKey: String,
+        @Header("Authorization") token: String,
+        @Body params: UpdateMuseumParams
+    ): Response<Unit>
+
+    @POST("rest/v1/rpc/delete_museum_with_relations")
+    suspend fun deleteMuseumRpc(
+        @Header("apikey") apiKey: String,
+        @Header("Authorization") token: String,
+        @Body params: DeleteMuseumParams
+    ): Response<Unit>
+
     @GET("rest/v1/museum?select=*")
     suspend fun getAllMuseums(
         @Header("apikey") apiKey: String,
@@ -118,19 +166,23 @@ interface SupabaseApi {
 
     // ==================== HALLS ====================
 
-    // Получение всех залов (для справочников)
     @GET("rest/v1/hall?select=*")
     suspend fun getAllHalls(
         @Header("apikey") apiKey: String,
         @Header("Authorization") token: String
     ): List<Hall>
 
-    // 🔥 НОВЫЙ: Получение залов по музею (фильтрация на сервере)
+    @GET("rest/v1/hall?select=hall_id,museum_id,hall_number,name,description,is_storage,museum(name)")
+    suspend fun getAllHallsWithMuseum(
+        @Header("apikey") apiKey: String,
+        @Header("Authorization") token: String
+    ): List<HallWithMuseumResponse>
+
     @GET("rest/v1/hall")
     suspend fun getHallsByMuseumId(
         @Header("apikey") apiKey: String,
         @Header("Authorization") token: String,
-        @Query("museum_id") museumIdFilter: String  // ← Обратите внимание: просто "museum_id"
+        @Query("museum_id") museumIdFilter: String
     ): List<Hall>
 }
 
@@ -203,6 +255,71 @@ data class UpdateCreatorParams(
 
 data class DeleteExhibitParams(
     val p_exhibit_id: Int
+)
+
+data class DeleteCreatorParams(
+    val p_creator_id: Int
+)
+
+data class HallWithMuseumResponse(
+    val hall_id: Int,
+    val museum_id: Int,
+    val hall_number: String?,
+    val name: String?,
+    val description: String?,
+    val is_storage: Boolean?,
+    val museum: MuseumNameResponse?
+)
+
+data class MuseumNameResponse(val name: String?)
+
+data class UpdateHallParams(
+    val p_hall_id: Int,
+    val p_museum_id: Int,
+    val p_hall_number: String?,
+    val p_name: String?,
+    val p_description: String?,
+    val p_is_storage: Boolean
+)
+
+data class DeleteHallParams(val p_hall_id: Int)
+
+data class AddHallParams(
+    val p_museum_id: Int,
+    val p_hall_number: String?,
+    val p_name: String?,
+    val p_description: String?,
+    val p_is_storage: Boolean
+)
+
+data class AddMuseumParams(
+    val p_name: String,
+    val p_address: String,
+    val p_city: String,
+    val p_country: String?,
+    val p_website: String?
+)
+
+data class UpdateMuseumParams(
+    val p_museum_id: Int,
+    val p_name: String,
+    val p_address: String,
+    val p_city: String,
+    val p_country: String?,
+    val p_website: String?
+)
+
+data class DeleteMuseumParams(
+    val p_museum_id: Int
+)
+
+data class AddExhibitParams(
+    val p_name: String,
+    val p_description: String,
+    val p_creation_year: Int,
+    val p_hall_id: Int?,
+    val p_author_id: Int?,
+    val p_image_url: String?
 )
 data class UpdateExhibitParams(
     val p_exhibit_id: Int,

@@ -65,6 +65,32 @@
             android:exported="false"
             android:label="Редактировать автора"
             android:parentActivityName=".ui.authors.AuthorDetailActivity" />
+        <activity
+            android:name=".ui.halls.HallManagementActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.halls.HallDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.halls.EditHallActivity"
+            android:exported="false"
+            android:label="Редактировать зал"
+            android:parentActivityName=".ui.halls.HallDetailActivity" />
+        <activity
+            android:name=".ui.halls.AddHallActivity"
+            android:exported="false"
+            android:label="Добавить зал"
+            android:parentActivityName=".ui.halls.HallManagementActivity" />
+        <activity
+            android:name=".ui.museums.AddMuseumActivity"
+            android:exported="false"
+            android:label="Добавить музей"
+            android:parentActivityName=".ui.museums.MuseumManagementActivity" />
+        <activity
+            android:name=".ui.museums.EditMuseumActivity"
+            android:exported="false"
+            android:label="Редактировать музей"
+            android:parentActivityName=".ui.museums.MuseumDetailActivity" />
     </application>
 
 </manifest>

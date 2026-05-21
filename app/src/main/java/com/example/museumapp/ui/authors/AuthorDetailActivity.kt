@@ -103,6 +103,7 @@ class AuthorDetailActivity : AppCompatActivity() {
                     is AuthorState.Loading -> setLoading(true)
                     is AuthorState.AuthorDeleted -> {
                         showToast("Автор удалён")
+                        setResult(RESULT_OK)
                         finish()
                     }
                     is AuthorState.Error -> {

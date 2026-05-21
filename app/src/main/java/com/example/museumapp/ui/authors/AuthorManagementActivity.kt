@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -25,6 +26,14 @@ class AuthorManagementActivity : AppCompatActivity() {
 
     private val viewModel: AuthorViewModel by viewModels {
         AuthorViewModelFactory((application as MuseumApp).authorRepository)
+    }
+
+    private val detailLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            viewModel.onEvent(AuthorEvent.LoadAllAuthors)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,7 +71,7 @@ class AuthorManagementActivity : AppCompatActivity() {
                 putExtra("author_death_date", author.deathDate)
                 putExtra("author_photo_url", author.photoUrl)
             }
-            startActivity(intent)
+            detailLauncher.launch(intent)
         }
         binding.recyclerViewAuthors.adapter = authorAdapter
         binding.recyclerViewAuthors.layoutManager = LinearLayoutManager(this)
@@ -180,8 +189,10 @@ class AuthorManagementActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_halls -> {
-                    showToast("Залы в разработке")
-                    false
+                    startActivity(Intent(this, com.example.museumapp.ui.halls.HallManagementActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+                    })
+                    true
                 }
                 else -> false
             }

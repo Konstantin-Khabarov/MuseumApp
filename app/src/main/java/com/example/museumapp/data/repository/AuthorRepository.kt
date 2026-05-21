@@ -1,8 +1,8 @@
 package com.example.museumapp.data.repository
 
 import android.util.Log
+import com.example.museumapp.data.auth.AuthManager
 import com.example.museumapp.data.model.Author
-import kotlinx.coroutines.delay
 
 class AuthorRepository {
     private val api = SupabaseClient.apiService
@@ -25,15 +25,12 @@ class AuthorRepository {
 
     suspend fun insertAuthor(author: Author): Result<Author> {
         return try {
-            val headers = SupabaseClient.getHeaders()
-            android.util.Log.d("AUTH_DEBUG", "Is Authenticated: ${com.example.museumapp.data.auth.AuthManager.isAuthenticated()}")
-            android.util.Log.d("AUTH_DEBUG", "Auth Header: ${headers["Authorization"]?.take(30)}...") // Первые 30 символов
+            val headers = AuthManager.getApiHeaders()
             val response = api.insertCreator(
                 apiKey = headers["apikey"]!!,
                 token = headers["Authorization"]!!,
                 creator = author
             )
-
             Result.success(if (response.isNotEmpty()) response[0] else author)
         } catch (e: Exception) {
             Result.failure(e)
@@ -49,7 +46,7 @@ class AuthorRepository {
         photoUrl: String?
     ): Result<Author> {
         return try {
-            val headers = SupabaseClient.getHeaders()
+            val headers = AuthManager.getApiHeaders()
             val updated = api.updateCreatorRpc(
                 apiKey = headers["apikey"]!!,
                 token = headers["Authorization"]!!,
@@ -69,8 +66,27 @@ class AuthorRepository {
         }
     }
 
-    suspend fun deleteAuthor(id: Int) {
-        val headers = SupabaseClient.getHeaders()
-        api.deleteCreator(id, headers["apikey"]!!, headers["Authorization"]!!)
+    suspend fun deleteAuthor(id: Int): Result<Unit> {
+        return try {
+            val headers = AuthManager.getApiHeaders()
+            Log.d("DELETE_AUTHOR", "Starting delete for id=$id")
+            Log.d("DELETE_AUTHOR", "apikey present=${headers["apikey"] != null}, token=${headers["Authorization"]?.take(30)}")
+            val response = api.deleteCreatorRpc(
+                apiKey = headers["apikey"]!!,
+                token = headers["Authorization"]!!,
+                params = DeleteCreatorParams(p_creator_id = id)
+            )
+            Log.d("DELETE_AUTHOR", "Response code=${response.code()}, successful=${response.isSuccessful}")
+            if (!response.isSuccessful) {
+                val errorBody = response.errorBody()?.string()
+                Log.e("DELETE_AUTHOR", "Error body: $errorBody")
+                return Result.failure(Exception("HTTP ${response.code()}: $errorBody"))
+            }
+            Log.d("DELETE_AUTHOR", "Delete successful")
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("DELETE_AUTHOR", "Exception: ${e.javaClass.simpleName}: ${e.message}", e)
+            Result.failure(e)
+        }
     }
 }

@@ -14,7 +14,8 @@ sealed class ExhibitEvent {
         val description: String,
         val creationYear: Int,
         val hallId: Int?,
-        val authorId: Int?
+        val authorId: Int?,
+        val imageUrl: String? = null
     ) : ExhibitEvent()
 
     data class DeleteExhibit(val exhibitId: Int) : ExhibitEvent()

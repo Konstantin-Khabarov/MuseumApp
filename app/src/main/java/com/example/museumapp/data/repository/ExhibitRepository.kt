@@ -1,6 +1,7 @@
 package com.example.museumapp.data.repository
 
 import android.util.Log
+import com.example.museumapp.data.auth.AuthManager
 import com.example.museumapp.data.cache.DataCache
 import com.example.museumapp.data.model.Exhibit
 import com.example.museumapp.data.model.Author
@@ -130,59 +131,46 @@ class ExhibitRepository {
         description: String,
         creationYear: Int,
         hallId: Int?,
-        authorId: Int?
+        authorId: Int?,
+        imageUrl: String? = null
     ): Exhibit {
-        val headers = SupabaseClient.getHeaders()
+        val authHeaders = AuthManager.getApiHeaders()
+        Log.d("ADD_EXHIBIT", "token=${authHeaders["Authorization"]?.take(40)}")
+        Log.d("ADD_EXHIBIT", "params: name=$name, year=$creationYear, hallId=$hallId, authorId=$authorId, imageUrl=$imageUrl")
 
-        // 1. Создаём экспонат
-        val exhibitRequest = ExhibitInsertRequest(
-            name = name,
-            description = description,
-            creation_year = creationYear,
-            current_hall_id = hallId
-        )
-
-        val createdExhibits = api.insertExhibit(
-            apiKey = headers["apikey"]!!,
-            token = headers["Authorization"]!!,
-            prefer = "return=representation",
-            exhibit = exhibitRequest
-        )
-
-        if (createdExhibits.isEmpty()) {
-            throw Exception("Не удалось создать экспонат")
+        val exhibitId = try {
+            api.addExhibitRpc(
+                apiKey = authHeaders["apikey"]!!,
+                token = authHeaders["Authorization"]!!,
+                params = AddExhibitParams(
+                    p_name = name,
+                    p_description = description,
+                    p_creation_year = creationYear,
+                    p_hall_id = hallId,
+                    p_author_id = authorId,
+                    p_image_url = imageUrl
+                )
+            ).also { Log.d("ADD_EXHIBIT", "RPC success, new exhibit_id=$it") }
+        } catch (e: retrofit2.HttpException) {
+            val errorBody = e.response()?.errorBody()?.string()
+            Log.e("ADD_EXHIBIT", "HTTP ${e.code()} error body: $errorBody")
+            throw e
+        } catch (e: Exception) {
+            Log.e("ADD_EXHIBIT", "Exception: ${e.javaClass.simpleName}: ${e.message}", e)
+            throw e
         }
 
-        val createdExhibit = createdExhibits[0]
-        val exhibitId = createdExhibit.exhibit_id
-
-        // 2. Если указан автор — создаём связь
-        if (authorId != null && authorId > 0) {
-            val relationRequest = ExhibitCreatorRequest(
-                exhibit_id = exhibitId,
-                creator_id = authorId
-            )
-
-            api.insertExhibitCreator(
-                apiKey = headers["apikey"]!!,
-                token = headers["Authorization"]!!,
-                prefer = "return=representation",
-                relation = relationRequest
-            )
-        }
-
-        // 3. Возвращаем объект для UI (конвертируем из RPC-ответа)
         return Exhibit(
             id = exhibitId,
-            title = createdExhibit.name,
-            description = createdExhibit.description,
-            creationYear = createdExhibit.creation_year,
-            hallId = createdExhibit.current_hall_id,
+            title = name,
+            description = description,
+            creationYear = creationYear,
+            hallId = hallId,
             authorId = authorId,
-            museumId = createdExhibit.museum_id,
-            authorName = null,  // Заполнится при следующей загрузке списка
-            museumName = createdExhibit.museum_name,
-            imageUrl = null
+            museumId = null,
+            authorName = null,
+            museumName = null,
+            imageUrl = imageUrl
         )
     }
 
@@ -224,10 +212,11 @@ class ExhibitRepository {
     ): Result<Exhibit> {
         return try {
             Log.d("ExhibitRepository", "Updating exhibit $exhibitId...")
+            val authHeaders = AuthManager.getApiHeaders()
 
             val updated = api.updateExhibitRpc(
-                apiKey = headers["apikey"]!!,
-                token = headers["Authorization"]!!,
+                apiKey = authHeaders["apikey"]!!,
+                token = authHeaders["Authorization"]!!,
                 params = UpdateExhibitParams(
                     p_exhibit_id = exhibitId,
                     p_name = name,
@@ -262,10 +251,11 @@ class ExhibitRepository {
     suspend fun deleteExhibit(exhibitId: Int): Result<Unit> {
         return try {
             Log.d("ExhibitRepository", "Deleting exhibit $exhibitId via RPC...")
+            val authHeaders = AuthManager.getApiHeaders()
 
             val result = api.deleteExhibitRpc(
-                apiKey = headers["apikey"]!!,
-                token = headers["Authorization"]!!,
+                apiKey = authHeaders["apikey"]!!,
+                token = authHeaders["Authorization"]!!,
                 params = DeleteExhibitParams(p_exhibit_id = exhibitId)
             )
 

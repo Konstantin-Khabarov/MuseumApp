@@ -179,14 +179,18 @@ class AuthorViewModel(
     
     private fun deleteAuthor(id: Int) {
         viewModelScope.launch {
+            android.util.Log.d("DELETE_AUTHOR", "ViewModel: deleteAuthor called for id=$id")
             _uiState.value = AuthorState.Loading
-            try {
-                authorRepository.deleteAuthor(id)
-                DataCache.invalidateAuthors()
-                _uiState.value = AuthorState.AuthorDeleted
-            } catch (e: Exception) {
-                _uiState.value = AuthorState.Error("Ошибка удаления: ${e.message}")
-            }
+            authorRepository.deleteAuthor(id)
+                .onSuccess {
+                    android.util.Log.d("DELETE_AUTHOR", "ViewModel: success → AuthorDeleted")
+                    DataCache.invalidateAuthors()
+                    _uiState.value = AuthorState.AuthorDeleted
+                }
+                .onFailure { e ->
+                    android.util.Log.e("DELETE_AUTHOR", "ViewModel: failure → ${e.message}")
+                    _uiState.value = AuthorState.Error("Ошибка удаления: ${e.message}")
+                }
         }
     }
     

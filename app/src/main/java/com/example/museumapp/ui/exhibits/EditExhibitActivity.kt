@@ -194,6 +194,7 @@ class EditExhibitActivity : AppCompatActivity() {
                     }
                     is ExhibitState.NavigateBack -> {
                         showToast("Экспонат обновлён")
+                        setResult(RESULT_OK)
                         finish()
                     }
                     is ExhibitState.Success -> {

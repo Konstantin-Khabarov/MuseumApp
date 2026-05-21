@@ -276,13 +276,16 @@ class AddExhibitActivity : AppCompatActivity() {
             val creationYear = yearText.toIntOrNull() ?: 0
 
             // 🔥 Отправляем событие с данными в ViewModel
+            val imageUrl = binding.editTextImageUrl.text.toString().trim().takeIf { it.isNotBlank() }
+
             viewModel.onEvent(
                 ExhibitEvent.SaveExhibit(
                     title = title,
                     description = description,
                     creationYear = creationYear,
                     hallId = selectedHallId,
-                    authorId = selectedAuthorId
+                    authorId = selectedAuthorId,
+                    imageUrl = imageUrl
                 )
             )
         }
@@ -315,6 +318,7 @@ class AddExhibitActivity : AppCompatActivity() {
     private fun setLoading(isLoading: Boolean) {
         binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
         binding.btnSave.isEnabled = !isLoading
+        binding.editTextImageUrl.isEnabled = !isLoading
         binding.spinnerMuseum.isEnabled = !isLoading
         binding.spinnerHall.isEnabled = !isLoading && selectedMuseumId != null
         binding.spinnerAuthor.isEnabled = !isLoading

@@ -163,11 +163,8 @@ class MainActivity : AppCompatActivity() {
             NavigationDestination.MuseumManagement ->
                 Intent(this, MuseumManagementActivity::class.java)
 
-            NavigationDestination.HallManagement -> {
-                // Пока заглушка - можно создать аналогичную активность
-                showToast("Экран залов в разработке")
-                return
-            }
+            NavigationDestination.HallManagement ->
+                Intent(this, com.example.museumapp.ui.halls.HallManagementActivity::class.java)
         }
 
         startActivity(intent)

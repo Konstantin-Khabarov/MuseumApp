@@ -11,6 +11,8 @@ data class Museum(
     val address: String,
     @SerializedName("city")
     val city: String,
+    @SerializedName("country")
+    val country: String? = null,
     @SerializedName("website")
     val website: String? = null
 )

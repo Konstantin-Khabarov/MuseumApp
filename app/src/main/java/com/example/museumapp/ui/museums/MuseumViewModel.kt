@@ -44,6 +44,53 @@ class MuseumViewModel(
             MuseumEvent.NavigateBack -> {
                 _uiState.value = MuseumState.NavigateBack
             }
+            is MuseumEvent.SaveMuseum -> saveMuseum(event)
+            is MuseumEvent.UpdateMuseum -> updateMuseum(event)
+            is MuseumEvent.DeleteMuseum -> deleteMuseum(event.museumId)
+        }
+    }
+
+    private fun saveMuseum(event: MuseumEvent.SaveMuseum) {
+        viewModelScope.launch {
+            _uiState.value = MuseumState.Loading
+            museumRepository.addMuseum(
+                name = event.name,
+                address = event.address,
+                city = event.city,
+                country = event.country,
+                website = event.website
+            ).onSuccess {
+                _uiState.value = MuseumState.MuseumAdded
+            }.onFailure { e ->
+                _uiState.value = MuseumState.Error("Ошибка: ${e.message}")
+            }
+        }
+    }
+
+    private fun updateMuseum(event: MuseumEvent.UpdateMuseum) {
+        viewModelScope.launch {
+            _uiState.value = MuseumState.Loading
+            museumRepository.updateMuseum(
+                museumId = event.museumId,
+                name = event.name,
+                address = event.address,
+                city = event.city,
+                country = event.country,
+                website = event.website
+            ).onSuccess {
+                _uiState.value = MuseumState.MuseumUpdated
+            }.onFailure { e ->
+                _uiState.value = MuseumState.Error("Ошибка: ${e.message}")
+            }
+        }
+    }
+
+    private fun deleteMuseum(museumId: Int) {
+        viewModelScope.launch {
+            _uiState.value = MuseumState.Loading
+            museumRepository.deleteMuseum(museumId)
+                .onSuccess { _uiState.value = MuseumState.MuseumDeleted }
+                .onFailure { e -> _uiState.value = MuseumState.Error("Ошибка удаления: ${e.message}") }
         }
     }
 

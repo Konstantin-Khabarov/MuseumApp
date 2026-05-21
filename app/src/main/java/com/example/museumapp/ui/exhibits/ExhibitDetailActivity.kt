@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -25,6 +26,15 @@ class ExhibitDetailActivity : AppCompatActivity() {
     }
 
     private var currentExhibitId: Int = -1
+
+    private val editLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            setResult(RESULT_OK)
+            finish()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -79,7 +89,7 @@ class ExhibitDetailActivity : AppCompatActivity() {
             startActivity(intent)*/
             val intent = Intent(this, EditExhibitActivity::class.java)
             intent.putExtra("exhibit_id", currentExhibitId)
-            startActivity(intent)
+            editLauncher.launch(intent)
         }
 
         // 🗑️ Удаление с подтверждением
@@ -121,7 +131,8 @@ class ExhibitDetailActivity : AppCompatActivity() {
                     }
                     is ExhibitState.NavigateBack -> {
                         showToast("Экспонат удалён")
-                        finish()  // 🔥 Возврат к списку
+                        setResult(RESULT_OK)
+                        finish()
                     }
                     else -> {}
                 }

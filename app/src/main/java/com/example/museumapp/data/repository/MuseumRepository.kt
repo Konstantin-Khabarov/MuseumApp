@@ -1,5 +1,7 @@
 package com.example.museumapp.data.repository
 
+import android.util.Log
+import com.example.museumapp.data.auth.AuthManager
 import com.example.museumapp.data.model.Museum
 
 class MuseumRepository {
@@ -30,15 +32,84 @@ class MuseumRepository {
         }
     }
 
-    suspend fun addMuseum(museum: Museum) {
-        // Логика добавления музея
+    suspend fun addMuseum(
+        name: String,
+        address: String,
+        city: String,
+        country: String?,
+        website: String?
+    ): Result<Unit> {
+        return try {
+            val headers = AuthManager.getApiHeaders()
+            api.addMuseumRpc(
+                apiKey = headers["apikey"]!!,
+                token = headers["Authorization"]!!,
+                params = AddMuseumParams(
+                    p_name = name,
+                    p_address = address,
+                    p_city = city,
+                    p_country = country,
+                    p_website = website
+                )
+            )
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("MuseumRepository", "Add exception: ${e.message}", e)
+            Result.failure(e)
+        }
     }
 
-    suspend fun updateMuseum(museum: Museum) {
-        // Логика обновления музея
+    suspend fun updateMuseum(
+        museumId: Int,
+        name: String,
+        address: String,
+        city: String,
+        country: String?,
+        website: String?
+    ): Result<Unit> {
+        return try {
+            val headers = AuthManager.getApiHeaders()
+            val response = api.updateMuseumRpc(
+                apiKey = headers["apikey"]!!,
+                token = headers["Authorization"]!!,
+                params = UpdateMuseumParams(
+                    p_museum_id = museumId,
+                    p_name = name,
+                    p_address = address,
+                    p_city = city,
+                    p_country = country,
+                    p_website = website
+                )
+            )
+            if (!response.isSuccessful) {
+                val err = response.errorBody()?.string()
+                Log.e("MuseumRepository", "Update error: $err")
+                return Result.failure(Exception("HTTP ${response.code()}: $err"))
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("MuseumRepository", "Update exception: ${e.message}", e)
+            Result.failure(e)
+        }
     }
 
-    suspend fun deleteMuseum(museumId: Int) {
-        // Логика удаления музея
+    suspend fun deleteMuseum(museumId: Int): Result<Unit> {
+        return try {
+            val headers = AuthManager.getApiHeaders()
+            val response = api.deleteMuseumRpc(
+                apiKey = headers["apikey"]!!,
+                token = headers["Authorization"]!!,
+                params = DeleteMuseumParams(p_museum_id = museumId)
+            )
+            if (!response.isSuccessful) {
+                val err = response.errorBody()?.string()
+                Log.e("MuseumRepository", "Delete error: $err")
+                return Result.failure(Exception("HTTP ${response.code()}: $err"))
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e("MuseumRepository", "Delete exception: ${e.message}", e)
+            Result.failure(e)
+        }
     }
 }

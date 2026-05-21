@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -26,6 +27,14 @@ class ExhibitManagementActivity : AppCompatActivity() {
 
     private val viewModel: ExhibitViewModel by viewModels {
         ExhibitViewModelFactory((application as MuseumApp).exhibitRepository)
+    }
+
+    private val detailLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            viewModel.onEvent(ExhibitEvent.ResetSearch)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -80,7 +89,7 @@ class ExhibitManagementActivity : AppCompatActivity() {
 
                 //putExtra("exhibit_image_url", exhibit.imageUrl)
             }
-            startActivity(intent)
+            detailLauncher.launch(intent)
         }
         binding.recyclerViewExhibits.adapter = exhibitAdapter
         binding.recyclerViewExhibits.layoutManager = LinearLayoutManager(this)
@@ -209,8 +218,10 @@ class ExhibitManagementActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_halls -> {
-                    showToast("Залы в разработке")
-                    false
+                    startActivity(Intent(this, com.example.museumapp.ui.halls.HallManagementActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+                    })
+                    true
                 }
                 else -> false
             }

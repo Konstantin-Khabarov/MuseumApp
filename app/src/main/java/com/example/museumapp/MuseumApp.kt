@@ -6,6 +6,7 @@ import coil.ImageLoader
 import com.example.museumapp.data.cache.DataCache
 import com.example.museumapp.data.repository.AuthorRepository
 import com.example.museumapp.data.repository.ExhibitRepository
+import com.example.museumapp.data.repository.HallRepository
 import com.example.museumapp.data.repository.MuseumRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,6 +19,7 @@ class MuseumApp : Application() {
     val authorRepository by lazy { AuthorRepository() }
     val exhibitRepository by lazy { ExhibitRepository() }
     val museumRepository by lazy { MuseumRepository() }
+    val hallRepository by lazy { HallRepository() }
 
     val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 

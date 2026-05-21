@@ -88,7 +88,8 @@ class ExhibitViewModel(
                     description = event.description,
                     creationYear = event.creationYear,
                     hallId = event.hallId,
-                    authorId = event.authorId
+                    authorId = event.authorId,
+                    imageUrl = event.imageUrl
                 )
             }
             is ExhibitEvent.UpdateExhibit -> {
@@ -358,10 +359,11 @@ class ExhibitViewModel(
         description: String,
         creationYear: Int,
         hallId: Int?,
-        authorId: Int?
+        authorId: Int?,
+        imageUrl: String? = null
     ) {
         viewModelScope.launch {
-            _uiState.value = ExhibitState.Loading  // Если добавили это состояние
+            _uiState.value = ExhibitState.Loading
 
             try {
                 // Валидация
@@ -375,7 +377,8 @@ class ExhibitViewModel(
                     description = description,
                     creationYear = creationYear,
                     hallId = hallId,
-                    authorId = authorId
+                    authorId = authorId,
+                    imageUrl = imageUrl
                 )
 
                 // 🔥 Добавляем новый экспонат в кэш и уведомляем UI

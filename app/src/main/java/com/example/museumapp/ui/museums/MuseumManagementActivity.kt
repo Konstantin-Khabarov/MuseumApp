@@ -3,6 +3,7 @@ package com.example.museumapp.ui.museums
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -23,6 +24,22 @@ class MuseumManagementActivity : AppCompatActivity() {
     private lateinit var museumAdapter: MuseumAdapter
     private val viewModel: MuseumViewModel by viewModels {
         MuseumViewModelFactory((application as MuseumApp).museumRepository)
+    }
+
+    private val detailLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            viewModel.onEvent(MuseumEvent.LoadAllMuseums)
+        }
+    }
+
+    private val addLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            viewModel.onEvent(MuseumEvent.LoadAllMuseums)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,10 +74,11 @@ class MuseumManagementActivity : AppCompatActivity() {
                 putExtra("museum_id", museum.id)
                 putExtra("museum_name", museum.name)
                 putExtra("museum_city", museum.city)
+                putExtra("museum_country", museum.country)
                 putExtra("museum_address", museum.address)
                 putExtra("museum_website", museum.website)
             }
-            startActivity(intent)
+            detailLauncher.launch(intent)
         }
         binding.recyclerViewMuseums.adapter = museumAdapter
         binding.recyclerViewMuseums.layoutManager = LinearLayoutManager(this)
@@ -96,6 +114,7 @@ class MuseumManagementActivity : AppCompatActivity() {
             MuseumState.NavigateToEditMuseum -> {
                 navigateToEditMuseum()
             }
+            MuseumState.Loading, MuseumState.MuseumAdded, MuseumState.MuseumUpdated, MuseumState.MuseumDeleted -> {}
         }
     }
 
@@ -135,8 +154,11 @@ class MuseumManagementActivity : AppCompatActivity() {
     }
 
     private fun navigateToAddMuseum() {
-        showToast("Добавление нового музея")
-        // startActivity(Intent(this, AddMuseumActivity::class.java))
+        if (!com.example.museumapp.data.auth.AuthManager.isAuthenticated()) {
+            showToast("Для добавления необходимо войти в систему")
+            return
+        }
+        addLauncher.launch(Intent(this, AddMuseumActivity::class.java))
     }
 
     private fun navigateToEditMuseum() {
@@ -161,8 +183,10 @@ class MuseumManagementActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_halls -> {
-                    showToast("Залы в разработке")
-                    false
+                    startActivity(Intent(this, com.example.museumapp.ui.halls.HallManagementActivity::class.java).apply {
+                        flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
+                    })
+                    true
                 }
                 else -> false
             }
