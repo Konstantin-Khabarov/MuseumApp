@@ -23,7 +23,7 @@ class HallManagementActivity : AppCompatActivity() {
     private lateinit var hallAdapter: HallAdapter
 
     private val viewModel: HallViewModel by viewModels {
-        HallViewModelFactory((application as MuseumApp).hallRepository)
+        HallViewModelFactory((application as MuseumApp).hallRepository, (application as MuseumApp).exhibitRepository, (application as MuseumApp).museumRepository)
     }
 
     private val detailLauncher = registerForActivityResult(
@@ -98,7 +98,8 @@ class HallManagementActivity : AppCompatActivity() {
                         showToast(state.message)
                     }
                     is HallState.Idle -> setLoading(false)
-                    HallState.HallAdded, HallState.HallUpdated, HallState.HallDeleted -> {}
+                    HallState.HallAdded, HallState.HallUpdated, HallState.HallDeleted,
+                    HallState.ExhibitsLoading, is HallState.HallExhibitsLoaded -> {}
                 }
             }
         }
@@ -108,6 +109,7 @@ class HallManagementActivity : AppCompatActivity() {
         binding.btnBackArrow.setOnClickListener { finish() }
 
         binding.btnSearch.setOnClickListener {
+            hideKeyboard()
             viewModel.onEvent(
                 HallEvent.SearchHalls(
                     hallNumber = binding.editTextHallNumber.text.toString(),
@@ -124,7 +126,7 @@ class HallManagementActivity : AppCompatActivity() {
             viewModel.onEvent(HallEvent.ResetSearch)
         }
 
-        binding.btnAddHall.setOnClickListener {
+        binding.fabAdd.setOnClickListener {
             if (!com.example.museumapp.data.auth.AuthManager.isAuthenticated()) {
                 showToast("Для добавления необходимо войти в систему")
                 return@setOnClickListener
@@ -162,6 +164,11 @@ class HallManagementActivity : AppCompatActivity() {
 
     private fun setLoading(isLoading: Boolean) {
         binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+    }
+
+    private fun hideKeyboard() {
+        val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+        currentFocus?.let { imm.hideSoftInputFromWindow(it.windowToken, 0) }
     }
 
     private fun showToast(message: String) {

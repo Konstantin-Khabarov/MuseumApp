@@ -23,7 +23,7 @@ class MuseumManagementActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMuseumManagementBinding
     private lateinit var museumAdapter: MuseumAdapter
     private val viewModel: MuseumViewModel by viewModels {
-        MuseumViewModelFactory((application as MuseumApp).museumRepository)
+        MuseumViewModelFactory((application as MuseumApp).museumRepository, (application as MuseumApp).hallRepository)
     }
 
     private val detailLauncher = registerForActivityResult(
@@ -114,7 +114,8 @@ class MuseumManagementActivity : AppCompatActivity() {
             MuseumState.NavigateToEditMuseum -> {
                 navigateToEditMuseum()
             }
-            MuseumState.Loading, MuseumState.MuseumAdded, MuseumState.MuseumUpdated, MuseumState.MuseumDeleted -> {}
+            MuseumState.Loading, MuseumState.MuseumAdded, MuseumState.MuseumUpdated,
+            MuseumState.MuseumDeleted, MuseumState.HallsLoading, is MuseumState.MuseumHallsLoaded -> {}
         }
     }
 
@@ -124,6 +125,7 @@ class MuseumManagementActivity : AppCompatActivity() {
         }
 
         binding.btnSearch.setOnClickListener {
+            hideKeyboard()
             val name = binding.editTextMuseumName.text.toString()
             val city = binding.editTextMuseumCity.text.toString()
 
@@ -139,7 +141,7 @@ class MuseumManagementActivity : AppCompatActivity() {
         }
 
         // Кнопка добавления
-        binding.btnAddMuseum.setOnClickListener {
+        binding.fabAdd.setOnClickListener {
             viewModel.onEvent(MuseumEvent.AddMuseum)
         }
 
@@ -191,6 +193,11 @@ class MuseumManagementActivity : AppCompatActivity() {
                 else -> false
             }
         }
+    }
+
+    private fun hideKeyboard() {
+        val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+        currentFocus?.let { imm.hideSoftInputFromWindow(it.windowToken, 0) }
     }
 
     private fun showToast(message: String) {

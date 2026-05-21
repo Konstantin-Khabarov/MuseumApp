@@ -2,15 +2,16 @@ package com.example.museumapp.ui.museums
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.museumapp.data.repository.HallRepository
 import com.example.museumapp.data.repository.MuseumRepository
-import com.example.museumapp.ui.authors.AuthorState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class MuseumViewModel(
-    private val museumRepository: MuseumRepository
+    private val museumRepository: MuseumRepository,
+    private val hallRepository: HallRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<MuseumState>(MuseumState.Idle)
@@ -47,6 +48,19 @@ class MuseumViewModel(
             is MuseumEvent.SaveMuseum -> saveMuseum(event)
             is MuseumEvent.UpdateMuseum -> updateMuseum(event)
             is MuseumEvent.DeleteMuseum -> deleteMuseum(event.museumId)
+            is MuseumEvent.LoadMuseumHalls -> loadMuseumHalls(event.museumId)
+        }
+    }
+
+    private fun loadMuseumHalls(museumId: Int) {
+        viewModelScope.launch {
+            _uiState.value = MuseumState.HallsLoading
+            try {
+                val halls = hallRepository.getHallsByMuseum(museumId)
+                _uiState.value = MuseumState.MuseumHallsLoaded(halls)
+            } catch (e: Exception) {
+                _uiState.value = MuseumState.Error("Ошибка загрузки залов: ${e.message}")
+            }
         }
     }
 

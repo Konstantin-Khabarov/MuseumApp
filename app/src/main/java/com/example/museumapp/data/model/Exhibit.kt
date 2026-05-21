@@ -19,5 +19,6 @@ data class Exhibit(
     val museumName: String? = null,
 
     @SerializedName("image_url")
-    val imageUrl: String? = null
+    val imageUrl: String? = null,
+    val hallNumber: String? = null
 )

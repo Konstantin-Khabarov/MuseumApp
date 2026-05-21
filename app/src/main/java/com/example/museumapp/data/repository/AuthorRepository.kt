@@ -23,6 +23,16 @@ class AuthorRepository {
         }
     }
 
+    suspend fun getAuthorById(id: Int): Author? {
+        return try {
+            val headers = SupabaseClient.getHeaders()
+            val result = api.getAllCreators(headers["apikey"]!!, headers["Authorization"]!!)
+            result.firstOrNull { it.id == id }
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     suspend fun insertAuthor(author: Author): Result<Author> {
         return try {
             val headers = AuthManager.getApiHeaders()

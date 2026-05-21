@@ -9,6 +9,7 @@ sealed class ExhibitState {
     data class Error(val message: String) : ExhibitState()
     data class ShowMessage(val message: String) : ExhibitState()
     object NavigateBack : ExhibitState()
+    // NavigateToAddExhibit moved to ExhibitNavigationEvent
     object NavigateToAddExhibit : ExhibitState()
     //data class NavigateToEdit(val exhibitId: Int) : ExhibitState()
     data class ExhibitDetailsLoaded(val exhibit: Exhibit) : ExhibitState()

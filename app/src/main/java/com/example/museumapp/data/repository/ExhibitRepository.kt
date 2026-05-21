@@ -19,18 +19,39 @@ class ExhibitRepository {
 
     suspend fun getExhibitsPage(page: Int, pageSize: Int = PAGE_SIZE): List<Exhibit> {
         val start = page * pageSize
-        val end = start + pageSize - 1
-        val range = "$start-$end"
+        val range = "$start-${start + pageSize - 1}"
 
-        val exhibits = api.getAllExhibits(
-            apiKey = headers["apikey"]!!,
-            token = headers["Authorization"]!!,
-            range = range
-        ).map { it.toExhibitWithRelations() }
+        Log.d("EXHIBIT_LOAD", "getExhibitsPage: page=$page range=$range")
+        val rpcResponse = try {
+            api.searchExhibitsRpc(
+                apiKey = headers["apikey"]!!,
+                token = headers["Authorization"]!!,
+                range = range,
+                params = SearchParams(result_limit = pageSize, result_offset = start)
+            )
+        } catch (e: retrofit2.HttpException) {
+            val body = e.response()?.errorBody()?.string()
+            Log.e("EXHIBIT_LOAD", "HTTP ${e.code()} on searchExhibitsRpc: $body")
+            throw e
+        } catch (e: Exception) {
+            Log.e("EXHIBIT_LOAD", "${e.javaClass.simpleName}: ${e.message}", e)
+            throw e
+        }
 
-        Log.d("IMG_DEBUG", "getExhibitsPage: loaded ${exhibits.size} exhibits")
-        exhibits.forEach { e ->
-            Log.d("IMG_DEBUG", "  exhibit id=${e.id} name='${e.title}' imageUrl=${e.imageUrl}")
+        val exhibits = rpcResponse.map { rpc ->
+            Exhibit(
+                id = rpc.exhibit_id,
+                title = rpc.name,
+                description = rpc.description,
+                creationYear = rpc.creation_year,
+                hallId = rpc.current_hall_id,
+                museumId = rpc.museum_id,
+                authorId = rpc.creator_ids?.firstOrNull(),
+                authorName = rpc.author_name,
+                museumName = rpc.museum_name,
+                imageUrl = rpc.image_url,
+                hallNumber = rpc.hall_number
+            )
         }
 
         DataCache.cacheExhibits(exhibits, clearPrevious = (page == 0))
@@ -56,14 +77,20 @@ class ExhibitRepository {
         )
 
         return try {
-            Log.d("Repository", "Fetching search results...")
+            Log.d("EXHIBIT_LOAD", "searchExhibits: title=$title author=$authorName museum=$museumName")
 
-            val rpcResponse = api.searchExhibitsRpc(
-                apiKey = headers["apikey"]!!,
-                token = headers["Authorization"]!!,
-                range = range,
-                params = params
-            )
+            val rpcResponse = try {
+                api.searchExhibitsRpc(
+                    apiKey = headers["apikey"]!!,
+                    token = headers["Authorization"]!!,
+                    range = range,
+                    params = params
+                )
+            } catch (e: retrofit2.HttpException) {
+                val body = e.response()?.errorBody()?.string()
+                Log.e("EXHIBIT_LOAD", "HTTP ${e.code()} on searchExhibitsRpc: $body")
+                throw e
+            }
 
             Log.d("IMG_DEBUG", "searchExhibits RPC returned ${rpcResponse.size} items")
             rpcResponse.forEach { rpc ->
@@ -81,7 +108,8 @@ class ExhibitRepository {
                     authorId = rpc.creator_ids?.firstOrNull(),
                     authorName = rpc.author_name,
                     museumName = rpc.museum_name,
-                    imageUrl = rpc.image_url
+                    imageUrl = rpc.image_url,
+                    hallNumber = rpc.hall_number
                 )
             }
 
@@ -125,6 +153,29 @@ class ExhibitRepository {
         return block() // Последняя попытка (может выбросить исключение)
     }
 
+
+    suspend fun getExhibitsByCreator(creatorId: Int): List<Exhibit> {
+        val rpc = api.getExhibitsByCreatorRpc(
+            apiKey = headers["apikey"]!!,
+            token = headers["Authorization"]!!,
+            params = mapOf("p_creator_id" to creatorId)
+        )
+        return rpc.map { r ->
+            Exhibit(
+                id = r.exhibit_id,
+                title = r.name,
+                description = r.description,
+                creationYear = r.creation_year,
+                hallId = r.current_hall_id,
+                museumId = r.museum_id,
+                authorId = creatorId,
+                authorName = r.author_name,
+                museumName = r.museum_name,
+                imageUrl = r.image_url,
+                hallNumber = r.hall_number
+            )
+        }
+    }
 
     suspend fun addExhibit(
         name: String,
@@ -207,25 +258,30 @@ class ExhibitRepository {
         name: String,
         description: String,
         creationYear: Int,
-        museumId: Int,
-        hallNumber: String
+        hallId: Int?,
+        authorId: Int?,
+        imageUrl: String? = null
     ): Result<Exhibit> {
         return try {
-            Log.d("ExhibitRepository", "Updating exhibit $exhibitId...")
             val authHeaders = AuthManager.getApiHeaders()
-
-            val updated = api.updateExhibitRpc(
-                apiKey = authHeaders["apikey"]!!,
-                token = authHeaders["Authorization"]!!,
-                params = UpdateExhibitParams(
-                    p_exhibit_id = exhibitId,
-                    p_name = name,
-                    p_description = description,
-                    p_creation_year = creationYear,
-                    p_museum_id = museumId,
-                    p_hall_number = hallNumber
-                )
+            val params = UpdateExhibitParams(
+                p_exhibit_id = exhibitId, p_name = name, p_description = description,
+                p_creation_year = creationYear, p_hall_id = hallId, p_author_id = authorId, p_image_url = imageUrl
             )
+            Log.d("UPDATE_EXHIBIT", "params: $params")
+            Log.d("UPDATE_EXHIBIT", "token=${authHeaders["Authorization"]?.take(40)}")
+
+            val updated = try {
+                api.updateExhibitRpc(
+                    apiKey = authHeaders["apikey"]!!,
+                    token = authHeaders["Authorization"]!!,
+                    params = params
+                )
+            } catch (e: retrofit2.HttpException) {
+                val body = e.response()?.errorBody()?.string()
+                Log.e("UPDATE_EXHIBIT", "HTTP ${e.code()} error body: $body")
+                throw e
+            }
 
             val updatedExhibit = Exhibit(
                 id = updated.exhibit_id,
@@ -304,10 +360,11 @@ class ExhibitRepository {
                 creationYear = details.creation_year,
                 hallId = details.current_hall_id,
                 museumId = details.museum_id,
-                authorId = null,
+                authorId = details.author_id,
                 authorName = details.author_name,
                 museumName = details.museum_name,
-                imageUrl = details.image_url
+                imageUrl = details.image_url,
+                hallNumber = details.hall_number
             )
 
             // 🔥 Сохраняем в кэш для будущего использования

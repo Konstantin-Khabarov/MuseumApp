@@ -29,12 +29,12 @@ class ExhibitAdapter(
 
         fun bind(exhibit: Exhibit) {
             binding.textExhibitTitle.text = exhibit.title
-            //binding.textExhibitDescription.text = exhibit.description.take(100) + "..."
-
-            // 🔥 Клик передаёт все нужные данные
-            binding.root.setOnClickListener {
-                onItemClick(exhibit)
-            }
+            val parts = listOfNotNull(
+                exhibit.authorName?.takeIf { it.isNotBlank() },
+                exhibit.museumName?.takeIf { it.isNotBlank() }
+            )
+            binding.textExhibitSubtitle.text = if (parts.isNotEmpty()) parts.joinToString(" · ") else "Год: ${exhibit.creationYear}"
+            binding.root.setOnClickListener { onItemClick(exhibit) }
         }
     }
 }

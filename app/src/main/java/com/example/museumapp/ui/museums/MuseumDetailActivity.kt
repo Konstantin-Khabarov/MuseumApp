@@ -10,20 +10,24 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.museumapp.MuseumApp
 import com.example.museumapp.data.auth.AuthManager
 import com.example.museumapp.data.model.Museum
 import com.example.museumapp.databinding.ActivityMuseumDetailBinding
+import com.example.museumapp.ui.halls.HallAdapter
+import com.example.museumapp.ui.halls.HallDetailActivity
 import kotlinx.coroutines.launch
 
 class MuseumDetailActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMuseumDetailBinding
     private val viewModel: MuseumViewModel by viewModels {
-        MuseumViewModelFactory((application as MuseumApp).museumRepository)
+        MuseumViewModelFactory((application as MuseumApp).museumRepository, (application as MuseumApp).hallRepository)
     }
 
     private lateinit var currentMuseum: Museum
+    private lateinit var hallAdapter: HallAdapter
 
     private val editLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -51,7 +55,11 @@ class MuseumDetailActivity : AppCompatActivity() {
         )
 
         displayMuseum(currentMuseum)
+        setupHallsRecycler()
         observeViewModel()
+        if (currentMuseum.id != -1) {
+            viewModel.onEvent(MuseumEvent.LoadMuseumHalls(currentMuseum.id))
+        }
 
         binding.btnEdit.setOnClickListener {
             if (!AuthManager.isAuthenticated()) {
@@ -103,6 +111,12 @@ class MuseumDetailActivity : AppCompatActivity() {
                         showToast(state.message)
                         setLoading(false)
                     }
+                    is MuseumState.HallsLoading -> binding.progressBarHalls.visibility = View.VISIBLE
+                    is MuseumState.MuseumHallsLoaded -> {
+                        binding.progressBarHalls.visibility = View.GONE
+                        if (state.halls.isEmpty()) binding.textNoHalls.visibility = View.VISIBLE
+                        else hallAdapter.submitList(state.halls)
+                    }
                     else -> setLoading(false)
                 }
             }
@@ -125,7 +139,7 @@ class MuseumDetailActivity : AppCompatActivity() {
         val website = museum.website
         if (!website.isNullOrBlank()) {
             binding.textDetailWebsite.text = website
-            binding.textDetailWebsite.setTextColor(android.graphics.Color.parseColor("#2196F3"))
+            binding.textDetailWebsite.setTextColor(android.graphics.Color.parseColor("#3F51B5"))
             binding.textDetailWebsite.isClickable = true
             binding.textDetailWebsite.setOnClickListener {
                 val url = if (website.startsWith("http")) website else "https://$website"
@@ -136,6 +150,22 @@ class MuseumDetailActivity : AppCompatActivity() {
             binding.textDetailWebsite.isClickable = false
             binding.textDetailWebsite.setTextColor(android.graphics.Color.parseColor("#999999"))
         }
+    }
+
+    private fun setupHallsRecycler() {
+        hallAdapter = HallAdapter { hall ->
+            startActivity(Intent(this, HallDetailActivity::class.java).apply {
+                putExtra("hall_id", hall.hallId)
+                putExtra("hall_museum_id", hall.museumId)
+                putExtra("hall_name", hall.name)
+                putExtra("hall_number", hall.hallNumber)
+                putExtra("hall_museum_name", hall.museumName)
+                putExtra("hall_description", hall.description)
+                putExtra("hall_is_storage", hall.isStorage ?: false)
+            })
+        }
+        binding.recyclerViewHalls.adapter = hallAdapter
+        binding.recyclerViewHalls.layoutManager = LinearLayoutManager(this)
     }
 
     private fun showToast(message: String) {

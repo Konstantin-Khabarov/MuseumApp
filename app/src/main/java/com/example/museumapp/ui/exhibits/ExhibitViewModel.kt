@@ -5,21 +5,33 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.museumapp.data.model.Exhibit
 import com.example.museumapp.data.model.Hall
+import com.example.museumapp.data.repository.AuthorRepository
 import com.example.museumapp.data.repository.AuthorSpinnerItem
 import com.example.museumapp.data.repository.ExhibitRepository
+import com.example.museumapp.data.repository.HallRepository
+import com.example.museumapp.data.repository.MuseumRepository
 import com.example.museumapp.data.repository.MuseumSpinnerItem
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class ExhibitViewModel(
-    private val exhibitRepository: ExhibitRepository
+    private val exhibitRepository: ExhibitRepository,
+    private val authorRepository: AuthorRepository,
+    private val museumRepository: MuseumRepository,
+    private val hallRepository: HallRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ExhibitState>(ExhibitState.Idle)
     val uiState: StateFlow<ExhibitState> = _uiState.asStateFlow()
+
+    private val _navigationEvent = MutableSharedFlow<ExhibitNavigationEvent>()
+    val navigationEvent: SharedFlow<ExhibitNavigationEvent> = _navigationEvent.asSharedFlow()
 
     // ==================== ПАГИНАЦИЯ ====================
     companion object {
@@ -71,16 +83,7 @@ class ExhibitViewModel(
                 resetSearch()
             }
             ExhibitEvent.NavigateToAddExhibit -> {
-                // Просто отправляем сигнал навигации
-                _uiState.value = ExhibitState.NavigateToAddExhibit
-            }
-            ExhibitEvent.ClearNavigationState -> {
-                // Возвращаемся к Idle или Success (чтобы StateFlow увидел изменение)
-                _uiState.value = if (cachedExhibits.isNotEmpty()) {
-                    ExhibitState.Success(cachedExhibits.toList())
-                } else {
-                    ExhibitState.Idle
-                }
+                viewModelScope.launch { _navigationEvent.emit(ExhibitNavigationEvent.ToAddExhibit) }
             }
             is ExhibitEvent.SaveExhibit -> {
                 addNewExhibit(
@@ -98,13 +101,17 @@ class ExhibitViewModel(
                     title = event.title,
                     description = event.description,
                     creationYear = event.creationYear,
-                    museumId = event.museumId,
-                    hallNumber = event.hallNumber
+                    hallId = event.hallId,
+                    authorId = event.authorId,
+                    imageUrl = event.imageUrl
                 )
             }
             is ExhibitEvent.DeleteExhibit -> {
                 deleteExhibit(event.exhibitId)
             }
+            is ExhibitEvent.FetchAuthorForNav -> fetchAuthorForNav(event.authorId)
+            is ExhibitEvent.FetchMuseumForNav -> fetchMuseumForNav(event.museumId)
+            is ExhibitEvent.FetchHallForNav -> fetchHallForNav(event.hallId)
             ExhibitEvent.NavigateBack -> {
                 _uiState.value = ExhibitState.NavigateBack
             }
@@ -139,8 +146,9 @@ class ExhibitViewModel(
         title: String,
         description: String,
         creationYear: Int,
-        museumId: Int,
-        hallNumber: String
+        hallId: Int?,
+        authorId: Int?,
+        imageUrl: String? = null
     ) {
         viewModelScope.launch {
             _uiState.value = ExhibitState.Loading
@@ -151,8 +159,9 @@ class ExhibitViewModel(
                     name = title,
                     description = description,
                     creationYear = creationYear,
-                    museumId = museumId,
-                    hallNumber = hallNumber
+                    hallId = hallId,
+                    authorId = authorId,
+                    imageUrl = imageUrl
                 )
 
                 result
@@ -342,6 +351,39 @@ class ExhibitViewModel(
     }
 
     // Обновлено для возврата трех значений
+    private fun fetchAuthorForNav(authorId: Int) {
+        viewModelScope.launch {
+            try {
+                val author = authorRepository.getAuthorById(authorId)
+                if (author != null) _navigationEvent.emit(ExhibitNavigationEvent.ToAuthor(author))
+            } catch (e: Exception) {
+                _uiState.value = ExhibitState.Error("Не удалось загрузить автора")
+            }
+        }
+    }
+
+    private fun fetchMuseumForNav(museumId: Int) {
+        viewModelScope.launch {
+            try {
+                val museum = museumRepository.getMuseumById(museumId)
+                if (museum != null) _navigationEvent.emit(ExhibitNavigationEvent.ToMuseum(museum))
+            } catch (e: Exception) {
+                _uiState.value = ExhibitState.Error("Не удалось загрузить музей")
+            }
+        }
+    }
+
+    private fun fetchHallForNav(hallId: Int) {
+        viewModelScope.launch {
+            try {
+                val hall = hallRepository.getHallById(hallId)
+                if (hall != null) _navigationEvent.emit(ExhibitNavigationEvent.ToHall(hall))
+            } catch (e: Exception) {
+                _uiState.value = ExhibitState.Error("Не удалось загрузить зал")
+            }
+        }
+    }
+
     fun getCurrentSearchValues(): Triple<String, String, String> {
         return Triple(
             currentTitle.orEmpty(),

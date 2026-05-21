@@ -1,6 +1,7 @@
 package com.example.museumapp.ui.authors
 
 import com.example.museumapp.data.model.Author
+import com.example.museumapp.data.model.Exhibit
 
 sealed class AuthorState {
     object Idle : AuthorState()
@@ -14,4 +15,6 @@ sealed class AuthorState {
     object AuthorAdded : AuthorState()
     object AuthorUpdated : AuthorState()
     object AuthorDeleted : AuthorState()
+    object ExhibitsLoading : AuthorState()
+    data class AuthorExhibitsLoaded(val exhibits: List<Exhibit>) : AuthorState()
 }

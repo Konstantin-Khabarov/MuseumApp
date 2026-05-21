@@ -19,7 +19,7 @@ class EditHallActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityEditHallBinding
     private val viewModel: HallViewModel by viewModels {
-        HallViewModelFactory((application as MuseumApp).hallRepository)
+        HallViewModelFactory((application as MuseumApp).hallRepository, (application as MuseumApp).exhibitRepository, (application as MuseumApp).museumRepository)
     }
 
     private var hallId: Int = -1

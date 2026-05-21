@@ -19,7 +19,7 @@ class AddHallActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityAddHallBinding
     private val viewModel: HallViewModel by viewModels {
-        HallViewModelFactory((application as MuseumApp).hallRepository)
+        HallViewModelFactory((application as MuseumApp).hallRepository, (application as MuseumApp).exhibitRepository, (application as MuseumApp).museumRepository)
     }
 
     private var museumsList = listOf<MuseumSpinnerItem>()

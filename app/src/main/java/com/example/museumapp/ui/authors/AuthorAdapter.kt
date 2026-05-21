@@ -28,9 +28,9 @@ class AuthorAdapter(
 
         fun bind(author: Author) {
             binding.textAuthorName.text = author.name
-            binding.root.setOnClickListener {
-                onItemClick(author)
-            }
+            val dates = listOfNotNull(author.birthDate, author.deathDate).joinToString(" — ")
+            binding.textAuthorSubtitle.text = dates.ifBlank { "Годы жизни не указаны" }
+            binding.root.setOnClickListener { onItemClick(author) }
         }
     }
 }

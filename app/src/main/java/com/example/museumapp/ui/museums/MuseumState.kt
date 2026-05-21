@@ -1,6 +1,7 @@
 package com.example.museumapp.ui.museums
 
 import com.example.museumapp.data.model.Museum
+import com.example.museumapp.data.repository.HallItem
 
 sealed class MuseumState {
     object Idle : MuseumState()
@@ -14,4 +15,6 @@ sealed class MuseumState {
     object MuseumAdded : MuseumState()
     object MuseumUpdated : MuseumState()
     object MuseumDeleted : MuseumState()
+    object HallsLoading : MuseumState()
+    data class MuseumHallsLoaded(val halls: List<HallItem>) : MuseumState()
 }

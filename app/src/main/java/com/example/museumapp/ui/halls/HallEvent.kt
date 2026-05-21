@@ -17,6 +17,8 @@ sealed class HallEvent {
         val isStorage: Boolean
     ) : HallEvent()
     data class DeleteHall(val hallId: Int) : HallEvent()
+    data class LoadHallExhibits(val hallId: Int) : HallEvent()
+    data class FetchMuseumForNav(val museumId: Int) : HallEvent()
     data class SaveHall(
         val museumId: Int,
         val hallNumber: String?,

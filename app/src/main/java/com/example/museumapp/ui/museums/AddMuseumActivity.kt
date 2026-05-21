@@ -15,7 +15,7 @@ class AddMuseumActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityAddMuseumBinding
     private val viewModel: MuseumViewModel by viewModels {
-        MuseumViewModelFactory((application as MuseumApp).museumRepository)
+        MuseumViewModelFactory((application as MuseumApp).museumRepository, (application as MuseumApp).hallRepository)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

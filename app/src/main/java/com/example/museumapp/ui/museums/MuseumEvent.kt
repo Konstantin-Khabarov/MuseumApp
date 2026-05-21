@@ -27,4 +27,5 @@ sealed class MuseumEvent {
         val website: String?
     ) : MuseumEvent()
     data class DeleteMuseum(val museumId: Int) : MuseumEvent()
+    data class LoadMuseumHalls(val museumId: Int) : MuseumEvent()
 }

@@ -3,6 +3,7 @@ package com.example.museumapp.data.repository
 import android.util.Log
 import com.example.museumapp.data.auth.AuthManager
 import com.example.museumapp.data.cache.DataCache
+import com.example.museumapp.data.model.Exhibit
 
 data class HallItem(
     val hallId: Int,
@@ -35,6 +36,33 @@ class HallRepository {
             (name.isNullOrEmpty() || hall.name?.contains(name, ignoreCase = true) == true) &&
             (museumName.isNullOrEmpty() || hall.museumName?.contains(museumName, ignoreCase = true) == true)
         }
+    }
+
+    suspend fun getHallsByMuseum(museumId: Int): List<HallItem> {
+        return try { getAllHalls().filter { it.museumId == museumId } }
+        catch (e: Exception) { emptyList() }
+    }
+
+    suspend fun getExhibitsByHall(hallId: Int): List<Exhibit> {
+        val headers = SupabaseClient.getHeaders()
+        return api.getExhibitsByHallRpc(
+            apiKey = headers["apikey"]!!,
+            token = headers["Authorization"]!!,
+            params = mapOf("p_hall_id" to hallId)
+        ).map { r ->
+            Exhibit(
+                id = r.exhibit_id, title = r.name, description = r.description,
+                creationYear = r.creation_year, hallId = r.current_hall_id,
+                museumId = r.museum_id, authorId = r.creator_ids?.firstOrNull(),
+                authorName = r.author_name, museumName = r.museum_name,
+                imageUrl = r.image_url, hallNumber = r.hall_number
+            )
+        }
+    }
+
+    suspend fun getHallById(id: Int): HallItem? {
+        return try { getAllHalls().firstOrNull { it.hallId == id } }
+        catch (e: Exception) { null }
     }
 
     suspend fun getMuseumsForSpinner(): List<MuseumSpinnerItem> {

@@ -10,6 +10,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import coil.load
 import coil.transform.RoundedCornersTransformation
 import com.example.museumapp.MuseumApp
@@ -17,13 +18,15 @@ import com.example.museumapp.R
 import com.example.museumapp.data.auth.AuthManager
 import com.example.museumapp.data.model.Author
 import com.example.museumapp.databinding.ActivityAuthorDetailBinding
+import com.example.museumapp.ui.exhibits.ExhibitAdapter
+import com.example.museumapp.ui.exhibits.ExhibitDetailActivity
 import kotlinx.coroutines.launch
 
 class AuthorDetailActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityAuthorDetailBinding
     private val viewModel: AuthorViewModel by viewModels {
-        AuthorViewModelFactory((application as MuseumApp).authorRepository)
+        AuthorViewModelFactory((application as MuseumApp).authorRepository, (application as MuseumApp).exhibitRepository)
     }
 
     private lateinit var currentAuthor: Author
@@ -58,7 +61,11 @@ class AuthorDetailActivity : AppCompatActivity() {
         )
 
         displayAuthor(currentAuthor)
+        setupExhibitsRecycler()
         observeViewModel()
+        if (currentAuthor.id != -1) {
+            viewModel.onEvent(AuthorEvent.LoadAuthorExhibits(currentAuthor.id))
+        }
 
         binding.btnEdit.setOnClickListener {
             if (!AuthManager.isAuthenticated()) {
@@ -110,6 +117,17 @@ class AuthorDetailActivity : AppCompatActivity() {
                         showToast(state.message)
                         setLoading(false)
                     }
+                    is AuthorState.ExhibitsLoading -> {
+                        binding.progressBarExhibits.visibility = View.VISIBLE
+                    }
+                    is AuthorState.AuthorExhibitsLoaded -> {
+                        binding.progressBarExhibits.visibility = View.GONE
+                        if (state.exhibits.isEmpty()) {
+                            binding.textNoExhibits.visibility = View.VISIBLE
+                        } else {
+                            exhibitAdapter.submitList(state.exhibits)
+                        }
+                    }
                     else -> setLoading(false)
                 }
             }
@@ -153,6 +171,26 @@ class AuthorDetailActivity : AppCompatActivity() {
             binding.imageViewAuthor.scaleType = ImageView.ScaleType.CENTER
             binding.imageViewAuthor.setImageResource(R.drawable.ic_no_image)
         }
+    }
+
+    private lateinit var exhibitAdapter: ExhibitAdapter
+
+    private fun setupExhibitsRecycler() {
+        exhibitAdapter = ExhibitAdapter { exhibit ->
+            val intent = Intent(this, ExhibitDetailActivity::class.java).apply {
+                putExtra("exhibit_id", exhibit.id)
+                putExtra("exhibit_title", exhibit.title)
+                putExtra("exhibit_description", exhibit.description)
+                putExtra("exhibit_creation_year", exhibit.creationYear)
+                putExtra("exhibit_author_id", exhibit.authorId)
+                putExtra("exhibit_museum_id", exhibit.museumId)
+                putExtra("exhibit_author_name", exhibit.authorName)
+                putExtra("exhibit_museum_name", exhibit.museumName)
+            }
+            startActivity(intent)
+        }
+        binding.recyclerViewExhibits.adapter = exhibitAdapter
+        binding.recyclerViewExhibits.layoutManager = LinearLayoutManager(this)
     }
 
     private fun showToast(message: String) {

@@ -15,6 +15,11 @@ class MuseumRepository {
         return response
     }
 
+    suspend fun getMuseumById(id: Int): Museum? {
+        return try { getAllMuseums().firstOrNull { it.id == id } }
+        catch (e: Exception) { null }
+    }
+
     suspend fun searchMuseums(
         name: String? = null,
         city: String? = null

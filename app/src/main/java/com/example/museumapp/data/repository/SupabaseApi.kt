@@ -116,6 +116,20 @@ interface SupabaseApi {
     ): Boolean
 
     // MUSEUMS
+    @POST("rest/v1/rpc/get_exhibits_by_hall")
+    suspend fun getExhibitsByHallRpc(
+        @Header("apikey") apiKey: String,
+        @Header("Authorization") token: String,
+        @Body params: Map<String, Int>
+    ): List<ExhibitRpcResponse>
+
+    @POST("rest/v1/rpc/get_exhibits_by_creator")
+    suspend fun getExhibitsByCreatorRpc(
+        @Header("apikey") apiKey: String,
+        @Header("Authorization") token: String,
+        @Body params: Map<String, Int>
+    ): List<ExhibitRpcResponse>
+
     @POST("rest/v1/rpc/update_hall")
     suspend fun updateHallRpc(
         @Header("apikey") apiKey: String,
@@ -204,7 +218,8 @@ data class ExhibitRpcResponse(
     val museum_id: Int?,
     val author_name: String?,
     val museum_name: String?,
-    val image_url: String? = null
+    val image_url: String? = null,
+    val hall_number: String? = null
 )
 
 data class ExhibitInsertRequest(
@@ -228,8 +243,10 @@ data class ExhibitDetailResponse(
     val current_hall_id: Int?,
     val museum_id: Int?,
     val museum_name: String?,
+    val author_id: Int? = null,
     val author_name: String?,
-    val image_url: String? = null
+    val image_url: String? = null,
+    val hall_number: String? = null
 )
 
 data class ExhibitCreatorResponse(
@@ -326,6 +343,7 @@ data class UpdateExhibitParams(
     val p_name: String,
     val p_description: String,
     val p_creation_year: Int,
-    val p_museum_id: Int,
-    val p_hall_number: String
+    val p_hall_id: Int?,
+    val p_author_id: Int?,
+    val p_image_url: String?
 )

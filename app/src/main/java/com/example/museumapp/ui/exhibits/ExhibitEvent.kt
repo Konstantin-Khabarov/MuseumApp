@@ -8,7 +8,6 @@ sealed class ExhibitEvent {
     ) : ExhibitEvent()
 
     object NavigateToAddExhibit : ExhibitEvent()
-    object ClearNavigationState : ExhibitEvent()
     data class SaveExhibit(
         val title: String,
         val description: String,
@@ -24,10 +23,14 @@ sealed class ExhibitEvent {
         val title: String,
         val description: String,
         val creationYear: Int,
-        val museumId: Int,
-        val hallNumber: String
+        val hallId: Int?,
+        val authorId: Int?,
+        val imageUrl: String? = null
     ) : ExhibitEvent()
 
     object ResetSearch : ExhibitEvent()
     object NavigateBack : ExhibitEvent()
+    data class FetchAuthorForNav(val authorId: Int) : ExhibitEvent()
+    data class FetchMuseumForNav(val museumId: Int) : ExhibitEvent()
+    data class FetchHallForNav(val hallId: Int) : ExhibitEvent()
 }

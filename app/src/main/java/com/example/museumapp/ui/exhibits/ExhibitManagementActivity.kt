@@ -26,7 +26,7 @@ class ExhibitManagementActivity : AppCompatActivity() {
     private var _uiStateWasNotIdleBefore = false
 
     private val viewModel: ExhibitViewModel by viewModels {
-        ExhibitViewModelFactory((application as MuseumApp).exhibitRepository)
+        ExhibitViewModelFactory((application as MuseumApp).exhibitRepository, (application as MuseumApp).authorRepository, (application as MuseumApp).museumRepository, (application as MuseumApp).hallRepository)
     }
 
     private val detailLauncher = registerForActivityResult(
@@ -61,7 +61,7 @@ class ExhibitManagementActivity : AppCompatActivity() {
         // Блокируем кнопки во время загрузки
         //binding.btnSearch.isEnabled = !isLoading
         //binding.btnReset.isEnabled = !isLoading
-        //binding.btnAdd.isEnabled = !isLoading
+        //binding.fabAdd.isEnabled = !isLoading
     }
 
     private fun setupUI() {
@@ -114,6 +114,11 @@ class ExhibitManagementActivity : AppCompatActivity() {
                 handleState(state)
             }
         }
+        lifecycleScope.launch {
+            viewModel.navigationEvent.collect { event ->
+                if (event is ExhibitNavigationEvent.ToAddExhibit) navigateToAddExhibit()
+            }
+        }
     }
 
     private fun handleState(state: ExhibitState) {
@@ -143,10 +148,6 @@ class ExhibitManagementActivity : AppCompatActivity() {
             ExhibitState.NavigateBack -> {
                 finish()
             }
-            ExhibitState.NavigateToAddExhibit -> {
-                navigateToAddExhibit()
-                viewModel.onEvent(ExhibitEvent.ClearNavigationState)
-            }
             else -> {}
         }
     }
@@ -159,6 +160,7 @@ class ExhibitManagementActivity : AppCompatActivity() {
 
         // Кнопка поиска
         binding.btnSearch.setOnClickListener {
+            hideKeyboard()
             val title = binding.editTextExhibitName.text.toString()
             val authorName = binding.editTextAuthorName.text.toString()
             val museumName = binding.editTextMuseumName.text.toString()
@@ -183,7 +185,7 @@ class ExhibitManagementActivity : AppCompatActivity() {
         }
 
         // Кнопка добавления нового экспоната
-        binding.btnAdd.setOnClickListener {
+        binding.fabAdd.setOnClickListener {
             if (AuthManager.isAuthenticated()) {
                 viewModel.onEvent(ExhibitEvent.NavigateToAddExhibit)
             } else {
@@ -226,6 +228,11 @@ class ExhibitManagementActivity : AppCompatActivity() {
                 else -> false
             }
         }
+    }
+
+    private fun hideKeyboard() {
+        val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+        currentFocus?.let { imm.hideSoftInputFromWindow(it.windowToken, 0) }
     }
 
     private fun showToast(message: String) {

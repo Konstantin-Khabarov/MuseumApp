@@ -15,7 +15,7 @@ class EditMuseumActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityEditMuseumBinding
     private val viewModel: MuseumViewModel by viewModels {
-        MuseumViewModelFactory((application as MuseumApp).museumRepository)
+        MuseumViewModelFactory((application as MuseumApp).museumRepository, (application as MuseumApp).hallRepository)
     }
 
     private var museumId: Int = -1

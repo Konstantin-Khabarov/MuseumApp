@@ -25,7 +25,7 @@ class AuthorManagementActivity : AppCompatActivity() {
     private lateinit var authorAdapter: AuthorAdapter
 
     private val viewModel: AuthorViewModel by viewModels {
-        AuthorViewModelFactory((application as MuseumApp).authorRepository)
+        AuthorViewModelFactory((application as MuseumApp).authorRepository, (application as MuseumApp).exhibitRepository)
     }
 
     private val detailLauncher = registerForActivityResult(
@@ -136,6 +136,7 @@ class AuthorManagementActivity : AppCompatActivity() {
         }
 
         binding.btnSearch.setOnClickListener {
+            hideKeyboard()
             val name = binding.editTextAuthorName.text.toString()
             viewModel.onEvent(
                 AuthorEvent.SearchAuthors(name)
@@ -147,7 +148,7 @@ class AuthorManagementActivity : AppCompatActivity() {
             viewModel.onEvent(AuthorEvent.ResetSearch)
         }
 
-        binding.btnAddAuthor.setOnClickListener {
+        binding.fabAdd.setOnClickListener {
             viewModel.onEvent(AuthorEvent.AddAuthor)
         }
 
@@ -197,6 +198,11 @@ class AuthorManagementActivity : AppCompatActivity() {
                 else -> false
             }
         }
+    }
+
+    private fun hideKeyboard() {
+        val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+        currentFocus?.let { imm.hideSoftInputFromWindow(it.windowToken, 0) }
     }
 
     private fun showToast(message: String) {

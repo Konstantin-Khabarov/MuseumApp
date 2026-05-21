@@ -2,17 +2,29 @@ package com.example.museumapp.ui.halls
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.museumapp.data.repository.ExhibitRepository
 import com.example.museumapp.data.repository.HallRepository
+import com.example.museumapp.data.repository.MuseumRepository
 import com.example.museumapp.data.repository.MuseumSpinnerItem
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class HallViewModel(private val hallRepository: HallRepository) : ViewModel() {
+class HallViewModel(
+    private val hallRepository: HallRepository,
+    private val exhibitRepository: ExhibitRepository,
+    private val museumRepository: MuseumRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow<HallState>(HallState.Idle)
     val uiState: StateFlow<HallState> = _uiState.asStateFlow()
+
+    private val _navigationEvent = MutableSharedFlow<HallNavigationEvent>()
+    val navigationEvent: SharedFlow<HallNavigationEvent> = _navigationEvent.asSharedFlow()
 
     private var currentHallNumber = ""
     private var currentName = ""
@@ -25,6 +37,8 @@ class HallViewModel(private val hallRepository: HallRepository) : ViewModel() {
             is HallEvent.SearchHalls -> searchHalls(event.hallNumber, event.name, event.museumName)
             HallEvent.ResetSearch -> resetSearch()
             HallEvent.LoadAllHalls -> loadAllHalls()
+            is HallEvent.LoadHallExhibits -> loadHallExhibits(event.hallId)
+            is HallEvent.FetchMuseumForNav -> fetchMuseumForNav(event.museumId)
             is HallEvent.SaveHall -> saveHall(event)
             is HallEvent.UpdateHall -> updateHall(event)
             is HallEvent.DeleteHall -> deleteHall(event.hallId)
@@ -66,6 +80,29 @@ class HallViewModel(private val hallRepository: HallRepository) : ViewModel() {
     private fun resetSearch() {
         currentHallNumber = ""; currentName = ""; currentMuseumName = ""
         loadAllHalls()
+    }
+
+    private fun fetchMuseumForNav(museumId: Int) {
+        viewModelScope.launch {
+            try {
+                val museum = museumRepository.getMuseumById(museumId)
+                if (museum != null) _navigationEvent.emit(HallNavigationEvent.ToMuseum(museum))
+            } catch (e: Exception) {
+                _uiState.value = HallState.Error("Не удалось загрузить данные музея")
+            }
+        }
+    }
+
+    private fun loadHallExhibits(hallId: Int) {
+        viewModelScope.launch {
+            _uiState.value = HallState.ExhibitsLoading
+            try {
+                val exhibits = hallRepository.getExhibitsByHall(hallId)
+                _uiState.value = HallState.HallExhibitsLoaded(exhibits)
+            } catch (e: Exception) {
+                _uiState.value = HallState.Error("Ошибка загрузки экспонатов: ${e.message}")
+            }
+        }
     }
 
     private fun saveHall(event: HallEvent.SaveHall) {

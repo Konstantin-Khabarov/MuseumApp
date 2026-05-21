@@ -14,7 +14,7 @@ class AddAuthorActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityAddAuthorBinding
     private val viewModel: AuthorViewModel by viewModels {
-        AuthorViewModelFactory((application as MuseumApp).authorRepository)
+        AuthorViewModelFactory((application as MuseumApp).authorRepository, (application as MuseumApp).exhibitRepository)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

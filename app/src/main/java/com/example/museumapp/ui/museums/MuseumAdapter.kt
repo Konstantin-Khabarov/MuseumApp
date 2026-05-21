@@ -28,9 +28,10 @@ class MuseumAdapter(
 
         fun bind(Museum: Museum) {
             binding.textMuseumName.text = Museum.name
-            binding.root.setOnClickListener {
-                onItemClick(Museum)
-            }
+            val location = listOfNotNull(Museum.city.takeIf { it.isNotBlank() }, Museum.country)
+                .joinToString(", ")
+            binding.textMuseumSubtitle.text = location.ifBlank { "Город не указан" }
+            binding.root.setOnClickListener { onItemClick(Museum) }
         }
     }
 }

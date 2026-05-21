@@ -26,4 +26,5 @@ sealed class AuthorEvent {
         val photoUrl: String?
     ) : AuthorEvent()
     data class DeleteAuthor(val authorId: Int) : AuthorEvent()
+    data class LoadAuthorExhibits(val authorId: Int) : AuthorEvent()
 }

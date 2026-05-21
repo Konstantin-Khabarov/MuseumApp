@@ -1,5 +1,6 @@
 package com.example.museumapp.ui.halls
 
+import com.example.museumapp.data.model.Exhibit
 import com.example.museumapp.data.repository.HallItem
 
 sealed class HallState {
@@ -11,4 +12,6 @@ sealed class HallState {
     object HallAdded : HallState()
     object HallUpdated : HallState()
     object HallDeleted : HallState()
+    object ExhibitsLoading : HallState()
+    data class HallExhibitsLoaded(val exhibits: List<Exhibit>) : HallState()
 }

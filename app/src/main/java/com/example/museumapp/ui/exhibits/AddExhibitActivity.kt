@@ -23,7 +23,7 @@ class AddExhibitActivity : AppCompatActivity() {
 
     // 🔥 Используем тот же ViewModel (shared между экранами)
     private val viewModel: ExhibitViewModel by viewModels {
-        ExhibitViewModelFactory((application as MuseumApp).exhibitRepository)
+        ExhibitViewModelFactory((application as MuseumApp).exhibitRepository, (application as MuseumApp).authorRepository, (application as MuseumApp).museumRepository, (application as MuseumApp).hallRepository)
     }
 
     // Данные для Spinner

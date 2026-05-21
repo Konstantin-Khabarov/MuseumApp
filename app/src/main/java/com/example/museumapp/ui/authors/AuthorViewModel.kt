@@ -6,13 +6,15 @@ import com.example.museumapp.data.auth.AuthManager
 import com.example.museumapp.data.cache.DataCache
 import com.example.museumapp.data.model.Author
 import com.example.museumapp.data.repository.AuthorRepository
+import com.example.museumapp.data.repository.ExhibitRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class AuthorViewModel(
-    private val authorRepository: AuthorRepository
+    private val authorRepository: AuthorRepository,
+    private val exhibitRepository: ExhibitRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<AuthorState>(AuthorState.Idle)
@@ -75,6 +77,7 @@ class AuthorViewModel(
             is AuthorEvent.DeleteAuthor -> {
                 deleteAuthor(event.authorId)
             }
+            is AuthorEvent.LoadAuthorExhibits -> loadAuthorExhibits(event.authorId)
         }
     }
 
@@ -194,6 +197,18 @@ class AuthorViewModel(
         }
     }
     
+    private fun loadAuthorExhibits(authorId: Int) {
+        viewModelScope.launch {
+            _uiState.value = AuthorState.ExhibitsLoading
+            try {
+                val exhibits = exhibitRepository.getExhibitsByCreator(authorId)
+                _uiState.value = AuthorState.AuthorExhibitsLoaded(exhibits)
+            } catch (e: Exception) {
+                _uiState.value = AuthorState.Error("Ошибка загрузки экспонатов: ${e.message}")
+            }
+        }
+    }
+
     fun resetState() {
         _uiState.value = AuthorState.Idle
     }

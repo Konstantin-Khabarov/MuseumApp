@@ -4,16 +4,14 @@
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
         <!-- Основные цвета -->
-        <item name="colorPrimary">#0720F4</item>
+        <item name="colorPrimary">#3F51B5</item>
+        <item name="colorPrimaryVariant">#283593</item>
         <item name="colorOnPrimary">@color/white</item>
 
-        <!-- 🔥 Цвет текста для полей ввода -->
-        <item name="android:textColorPrimary">#000000</item>
+        <item name="android:textColorPrimary">#212121</item>
         <item name="android:textColorSecondary">#757575</item>
-        <item name="android:editTextColor">#000000</item>
-
-        <!-- Цвета для TextInputLayout -->
-        <item name="colorOnSurface">#000000</item>
+        <item name="android:editTextColor">#212121</item>
+        <item name="colorOnSurface">#212121</item>
     </style>
 
     <style name="Theme.MuseumApp" parent="Base.Theme.MuseumApp" />
