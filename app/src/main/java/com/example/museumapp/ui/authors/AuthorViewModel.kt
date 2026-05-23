@@ -7,6 +7,7 @@ import com.example.museumapp.data.cache.DataCache
 import com.example.museumapp.data.model.Author
 import com.example.museumapp.data.repository.AuthorRepository
 import com.example.museumapp.data.repository.ExhibitRepository
+import com.example.museumapp.util.parseError
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,7 +21,6 @@ class AuthorViewModel(
     private val _uiState = MutableStateFlow<AuthorState>(AuthorState.Idle)
     val uiState: StateFlow<AuthorState> = _uiState.asStateFlow()
 
-    // Поля поиска для сохранения состояния
     private var currentName = ""
 
     init {
@@ -87,7 +87,7 @@ class AuthorViewModel(
                 val authors = authorRepository.getAllAuthors()
                 _uiState.value = AuthorState.Success(authors)
             } catch (e: Exception) {
-                _uiState.value = AuthorState.Error("Ошибка загрузки: ${e.message}")
+                _uiState.value = AuthorState.Error(parseError(e))
             }
         }
     }
@@ -115,10 +115,10 @@ class AuthorViewModel(
                     DataCache.invalidateAuthors()
                     _uiState.value = AuthorState.AuthorAdded
                 }.onFailure { error ->
-                    _uiState.value = AuthorState.Error("Ошибка: ${error.message}")
+                    _uiState.value = AuthorState.Error(parseError(error))
                 }
             } catch (e: Exception) {
-                _uiState.value = AuthorState.Error("Ошибка: ${e.message}")
+                _uiState.value = AuthorState.Error(parseError(e))
             }
         }
     }
@@ -146,16 +146,16 @@ class AuthorViewModel(
                     DataCache.invalidateAuthors()
                     _uiState.value = AuthorState.AuthorUpdated
                 }.onFailure { error ->
-                    _uiState.value = AuthorState.Error("Ошибка: ${error.message}")
+                    _uiState.value = AuthorState.Error(parseError(error))
                 }
             } catch (e: Exception) {
-                _uiState.value = AuthorState.Error("Ошибка: ${e.message}")
+                _uiState.value = AuthorState.Error(parseError(e))
             }
         }
     }
 
     private fun searchAuthors(name: String) {
-        // Сохраняем текущие значения
+
         currentName = name
 
         viewModelScope.launch {
@@ -170,7 +170,7 @@ class AuthorViewModel(
                     _uiState.value = AuthorState.Success(authors)
                 }
             } catch (e: Exception) {
-                _uiState.value = AuthorState.Error("Ошибка поиска: ${e.message}")
+                _uiState.value = AuthorState.Error(parseError(e))
             }
         }
     }
@@ -179,24 +179,21 @@ class AuthorViewModel(
         currentName = ""
         loadAllAuthors()
     }
-    
+
     private fun deleteAuthor(id: Int) {
         viewModelScope.launch {
-            android.util.Log.d("DELETE_AUTHOR", "ViewModel: deleteAuthor called for id=$id")
             _uiState.value = AuthorState.Loading
             authorRepository.deleteAuthor(id)
                 .onSuccess {
-                    android.util.Log.d("DELETE_AUTHOR", "ViewModel: success → AuthorDeleted")
                     DataCache.invalidateAuthors()
                     _uiState.value = AuthorState.AuthorDeleted
                 }
                 .onFailure { e ->
-                    android.util.Log.e("DELETE_AUTHOR", "ViewModel: failure → ${e.message}")
-                    _uiState.value = AuthorState.Error("Ошибка удаления: ${e.message}")
+                    _uiState.value = AuthorState.Error(parseError(e))
                 }
         }
     }
-    
+
     private fun loadAuthorExhibits(authorId: Int) {
         viewModelScope.launch {
             _uiState.value = AuthorState.ExhibitsLoading
@@ -204,7 +201,7 @@ class AuthorViewModel(
                 val exhibits = exhibitRepository.getExhibitsByCreator(authorId)
                 _uiState.value = AuthorState.AuthorExhibitsLoaded(exhibits)
             } catch (e: Exception) {
-                _uiState.value = AuthorState.Error("Ошибка загрузки экспонатов: ${e.message}")
+                _uiState.value = AuthorState.Error(parseError(e))
             }
         }
     }
@@ -212,18 +209,6 @@ class AuthorViewModel(
     fun resetState() {
         _uiState.value = AuthorState.Idle
     }
-
-    /*fun deleteAuthor(id: Int) {
-        viewModelScope.launch {
-            try {
-                authorRepository.deleteAuthor(id)
-                // Обновить список, если нужно
-                loadAllAuthors() // например, перезагрузить
-            } catch (e: Exception) {
-                _uiState.value = AuthorState.Error("Ошибка удаления: ${e.message}")
-            }
-        }
-    }*/
 
     fun getCurrentSearchValues(): String {
         return currentName

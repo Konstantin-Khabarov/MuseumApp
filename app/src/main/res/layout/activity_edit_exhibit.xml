@@ -6,16 +6,24 @@
     android:layout_height="match_parent"
     android:background="#FAFAFA"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:clipChildren="false"
+    android:clipToPadding="false">
 
     <LinearLayout
-        android:id="@+id/topBar"
+                android:id="@+id/topBar"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
+        android:layout_height="84dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="@android:color/white"
+        android:paddingTop="28dp"
+        android:background="@drawable/topbar_background"
+        android:layout_marginStart="-16dp"
+        android:layout_marginEnd="-16dp"
+        android:layout_marginTop="-16dp"
         android:layout_marginBottom="16dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
         android:elevation="4dp">
 
         <ImageButton
@@ -24,18 +32,28 @@
             android:layout_height="48dp"
             android:src="@drawable/ic_arrow_back"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Назад"
-            app:tint="#3F51B5" />
+            android:contentDescription="@string/cd_back"
+            app:tint="@android:color/white" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Редактировать экспонат"
-            android:textColor="#2D3436"
+            android:text="@string/title_edit_exhibit"
+            android:textColor="@android:color/white"
             android:textSize="20sp"
             android:textStyle="bold"
             android:paddingStart="8dp" />
+
+    
+        <ImageButton
+            android:id="@+id/btnHome"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_home"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/cd_home"
+            app:tint="@android:color/white" />
 
     </LinearLayout>
 
@@ -66,7 +84,7 @@
                         android:id="@+id/editTextTitle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Название экспоната *"
+                        android:hint="@string/hint_exhibit_title"
                         android:inputType="text"
                         android:maxLines="1" />
                 </com.google.android.material.textfield.TextInputLayout>
@@ -80,7 +98,7 @@
                         android:id="@+id/editTextDescription"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Описание"
+                        android:hint="@string/label_description"
                         android:inputType="textMultiLine"
                         android:minLines="3"
                         android:gravity="top|start" />
@@ -95,7 +113,7 @@
                         android:id="@+id/editTextYear"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Год создания"
+                        android:hint="@string/hint_creation_year"
                         android:inputType="number"
                         android:maxLines="1" />
                 </com.google.android.material.textfield.TextInputLayout>
@@ -103,7 +121,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Автор"
+                    android:text="@string/title_author"
                     android:textColor="#2D3436"
                     android:textSize="14sp"
                     android:textStyle="bold"
@@ -120,7 +138,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Музей *"
+                    android:text="@string/label_museum_required"
                     android:textColor="#2D3436"
                     android:textSize="14sp"
                     android:textStyle="bold"
@@ -138,7 +156,7 @@
                     android:id="@+id/textHallLabel"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Зал"
+                    android:text="@string/title_hall"
                     android:textColor="#2D3436"
                     android:textSize="14sp"
                     android:textStyle="bold"
@@ -163,7 +181,7 @@
                         android:id="@+id/editTextImageUrl"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Ссылка на фото (URL)"
+                        android:hint="@string/hint_photo_url"
                         android:inputType="textUri"
                         android:maxLines="1" />
                 </com.google.android.material.textfield.TextInputLayout>
@@ -172,7 +190,7 @@
                     android:id="@+id/btnSave"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Сохранить изменения"
+                    android:text="@string/btn_save_changes"
                     android:backgroundTint="#3F51B5"
                     android:textColor="@android:color/white"
                     android:textSize="16sp" />

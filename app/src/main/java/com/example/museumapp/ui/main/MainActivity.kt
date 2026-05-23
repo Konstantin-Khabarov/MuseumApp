@@ -7,7 +7,9 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.museumapp.data.auth.AuthManager
 import com.example.museumapp.ui.exhibits.ExhibitManagementActivity
 import com.example.museumapp.ui.museums.MuseumManagementActivity
@@ -57,7 +59,6 @@ class MainActivity : AppCompatActivity() {
             viewModel.onMuseumInfoClicked()
         }
 
-        // Кнопка информации о залах (пока заглушка)
         binding.cardExhibitionManagement.setOnClickListener {
             viewModel.onHallsInfoClicked()
         }
@@ -65,7 +66,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun observeViewModel() {
         lifecycleScope.launch {
-            viewModel.uiState.collect { state ->
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
                 when (state) {
                     is MainState.Idle -> {
                     }
@@ -81,30 +83,33 @@ class MainActivity : AppCompatActivity() {
                     }
 
                     MainState.Loading -> {
-                        // Можно показать ProgressBar
+
                     }
                 }
+            }
             }
         }
     }
 
     private fun observeAuthState() {
         lifecycleScope.launch {
-            authViewModel.uiState.collect { state ->
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                authViewModel.uiState.collect { state ->
                 when (state) {
                     is AuthUiState.Authenticated -> {
-                        // ✅ Пользователь вошёл — показываем кнопку выхода
                         val userEmail = AuthManager.currentUser?.email ?: "Пользователь"
                         binding.textUserName.text = userEmail
                         binding.textUserName.visibility = View.VISIBLE
                         binding.btnLogout.visibility = View.VISIBLE
+                        binding.btnLogin.visibility = View.GONE
                     }
                     else -> {
-                        // ❌ Гость или проверка — скрываем кнопку
                         binding.textUserName.visibility = View.GONE
                         binding.btnLogout.visibility = View.GONE
+                        binding.btnLogin.visibility = View.VISIBLE
                     }
                 }
+            }
             }
         }
     }
@@ -122,7 +127,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun performLogout() {
         lifecycleScope.launch {
-            // Показываем загрузку (опционально)
+
             binding.btnLogout.isEnabled = false
 
             val result = authViewModel.logout()
@@ -132,9 +137,7 @@ class MainActivity : AppCompatActivity() {
             result
                 .onSuccess {
                     showToast("Выход выполнен")
-                    // 🔥 Обновляем интерфейс: кнопка скроется автоматически через observeAuthState()
-                    // 🔥 Опционально: обновить списки, если они фильтруются по правам
-                    //refreshContent()
+
                 }
                 .onFailure { error ->
                     showToast("Ошибка выхода: ${error.message}")
@@ -145,9 +148,7 @@ class MainActivity : AppCompatActivity() {
     private fun navigateToDestination(destination: NavigationDestination) {
         if (destination.requiresAuth && !AuthManager.isAuthenticated()) {
             showToast("Для этого действия необходимо войти в систему")
-            // 🔥 Опционально: предложить войти
-            // val intent = Intent(this, LoginActivity::class.java)
-            // startActivity(intent)
+
             return
         }
         val intent = when (destination) {

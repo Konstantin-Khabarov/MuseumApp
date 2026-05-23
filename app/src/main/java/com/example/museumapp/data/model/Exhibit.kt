@@ -13,8 +13,8 @@ data class Exhibit(
     val creationYear: Int,
     @SerializedName("current_hall_id")
     val hallId: Int? = null,
-    val authorId: Int? = null, // Для удобства (первый автор)
-    val museumId: Int? = null, // Для удобства (через hall)
+    val authorId: Int? = null,
+    val museumId: Int? = null,
     val authorName: String? = null,
     val museumName: String? = null,
 

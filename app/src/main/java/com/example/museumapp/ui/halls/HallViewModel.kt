@@ -2,10 +2,10 @@ package com.example.museumapp.ui.halls
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.museumapp.data.repository.ExhibitRepository
 import com.example.museumapp.data.repository.HallRepository
 import com.example.museumapp.data.repository.MuseumRepository
 import com.example.museumapp.data.repository.MuseumSpinnerItem
+import com.example.museumapp.util.parseError
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -16,7 +16,6 @@ import kotlinx.coroutines.launch
 
 class HallViewModel(
     private val hallRepository: HallRepository,
-    private val exhibitRepository: ExhibitRepository,
     private val museumRepository: MuseumRepository
 ) : ViewModel() {
 
@@ -52,7 +51,7 @@ class HallViewModel(
                 val halls = hallRepository.getAllHalls()
                 _uiState.value = HallState.Success(halls)
             } catch (e: Exception) {
-                _uiState.value = HallState.Error("Ошибка загрузки: ${e.message}")
+                _uiState.value = HallState.Error(parseError(e))
             }
         }
     }
@@ -72,7 +71,7 @@ class HallViewModel(
                 _uiState.value = if (halls.isEmpty()) HallState.ShowMessage("Залы не найдены")
                                  else HallState.Success(halls)
             } catch (e: Exception) {
-                _uiState.value = HallState.Error("Ошибка поиска: ${e.message}")
+                _uiState.value = HallState.Error(parseError(e))
             }
         }
     }
@@ -88,7 +87,7 @@ class HallViewModel(
                 val museum = museumRepository.getMuseumById(museumId)
                 if (museum != null) _navigationEvent.emit(HallNavigationEvent.ToMuseum(museum))
             } catch (e: Exception) {
-                _uiState.value = HallState.Error("Не удалось загрузить данные музея")
+                _uiState.value = HallState.Error(parseError(e))
             }
         }
     }
@@ -100,7 +99,7 @@ class HallViewModel(
                 val exhibits = hallRepository.getExhibitsByHall(hallId)
                 _uiState.value = HallState.HallExhibitsLoaded(exhibits)
             } catch (e: Exception) {
-                _uiState.value = HallState.Error("Ошибка загрузки экспонатов: ${e.message}")
+                _uiState.value = HallState.Error(parseError(e))
             }
         }
     }
@@ -117,7 +116,7 @@ class HallViewModel(
             ).onSuccess {
                 _uiState.value = HallState.HallAdded
             }.onFailure { e ->
-                _uiState.value = HallState.Error("Ошибка: ${e.message}")
+                _uiState.value = HallState.Error(parseError(e))
             }
         }
     }
@@ -130,7 +129,7 @@ class HallViewModel(
                 hallNumber = event.hallNumber, name = event.name,
                 description = event.description, isStorage = event.isStorage
             ).onSuccess { _uiState.value = HallState.HallUpdated }
-             .onFailure { e -> _uiState.value = HallState.Error("Ошибка: ${e.message}") }
+             .onFailure { e -> _uiState.value = HallState.Error(parseError(e)) }
         }
     }
 
@@ -139,7 +138,7 @@ class HallViewModel(
             _uiState.value = HallState.Loading
             hallRepository.deleteHall(hallId)
                 .onSuccess { _uiState.value = HallState.HallDeleted }
-                .onFailure { e -> _uiState.value = HallState.Error("Ошибка удаления: ${e.message}") }
+                .onFailure { e -> _uiState.value = HallState.Error(parseError(e)) }
         }
     }
 

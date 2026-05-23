@@ -4,18 +4,16 @@ import com.example.museumapp.data.model.Author
 import com.example.museumapp.data.model.Exhibit
 import com.example.museumapp.data.model.Hall
 import com.example.museumapp.data.model.Museum
+import com.google.gson.annotations.SerializedName
 import retrofit2.Response
 import retrofit2.http.Body
-import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Header
-import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Query
 
 interface SupabaseApi {
 
-    // CREATORS
     @GET("rest/v1/creator?select=*")
     suspend fun getAllCreators(
         @Header("apikey") apiKey: String,
@@ -23,21 +21,12 @@ interface SupabaseApi {
     ): List<Author>
 
     @POST("rest/v1/creator")
-    suspend fun insertCreator(
+    suspend fun insertCreatorRaw(
         @Header("apikey") apiKey: String,
         @Header("Authorization") token: String,
         @Header("Prefer") prefer: String = "return=representation",
-        @Body creator: Author
-    ): List<Author>
-
-    @PATCH("rest/v1/creator")
-    suspend fun updateCreator(
-        @Query("creator_id") creatorIdFilter: String,
-        @Header("apikey") apiKey: String,
-        @Header("Authorization") token: String,
-        @Header("Prefer") prefer: String = "return=representation",
-        @Body creator: AuthorUpdateRequest
-    ): List<Author>
+        @Body creator: AuthorInsertRequest
+    ): Response<List<Author>>
 
     @POST("rest/v1/rpc/update_creator")
     suspend fun updateCreatorRpc(
@@ -53,14 +42,6 @@ interface SupabaseApi {
         @Body params: DeleteCreatorParams
     ): Response<Unit>
 
-    // EXHIBITS
-    @GET("rest/v1/exhibit")
-    suspend fun getAllExhibits(
-        @Header("apikey") apiKey: String,
-        @Header("Authorization") token: String,
-        @Header("Range") range: String = "0-19"
-    ): List<Exhibit>
-
     @POST("rest/v1/rpc/search_exhibits")
     suspend fun searchExhibitsRpc(
         @Header("apikey") apiKey: String,
@@ -74,7 +55,7 @@ interface SupabaseApi {
         @Header("apikey") apiKey: String,
         @Header("Authorization") token: String,
         @Body params: Map<String, Int>
-    ): ExhibitDetailResponse // Supabase RPC возвращает массив даже для 1 строки
+    ): ExhibitDetailResponse
 
     @POST("rest/v1/rpc/add_exhibit")
     suspend fun addExhibitRpc(
@@ -82,22 +63,6 @@ interface SupabaseApi {
         @Header("Authorization") token: String,
         @Body params: AddExhibitParams
     ): Int
-
-    @POST("rest/v1/exhibit")
-    suspend fun insertExhibit(
-        @Header("apikey") apiKey: String,
-        @Header("Authorization") token: String,
-        @Header("Prefer") prefer: String = "return=representation",
-        @Body exhibit: ExhibitInsertRequest
-    ): List<ExhibitRpcResponse>
-
-    @POST("rest/v1/exhibit_creator")
-    suspend fun insertExhibitCreator(
-        @Header("apikey") apiKey: String,
-        @Header("Authorization") token: String,
-        @Header("Prefer") prefer: String = "return=representation",
-        @Body relation: ExhibitCreatorRequest
-    ): List<ExhibitCreatorResponse>
 
     @POST("rest/v1/rpc/update_exhibit")
     suspend fun updateExhibitRpc(
@@ -115,7 +80,6 @@ interface SupabaseApi {
         @Body params: DeleteExhibitParams
     ): Boolean
 
-    // MUSEUMS
     @POST("rest/v1/rpc/get_exhibits_by_hall")
     suspend fun getExhibitsByHallRpc(
         @Header("apikey") apiKey: String,
@@ -156,7 +120,7 @@ interface SupabaseApi {
         @Header("apikey") apiKey: String,
         @Header("Authorization") token: String,
         @Body params: AddMuseumParams
-    ): Int
+    ): Response<Int>
 
     @POST("rest/v1/rpc/update_museum")
     suspend fun updateMuseumRpc(
@@ -177,14 +141,6 @@ interface SupabaseApi {
         @Header("apikey") apiKey: String,
         @Header("Authorization") token: String
     ): List<Museum>
-
-    // ==================== HALLS ====================
-
-    @GET("rest/v1/hall?select=*")
-    suspend fun getAllHalls(
-        @Header("apikey") apiKey: String,
-        @Header("Authorization") token: String
-    ): List<Hall>
 
     @GET("rest/v1/hall?select=hall_id,museum_id,hall_number,name,description,is_storage,museum(name)")
     suspend fun getAllHallsWithMuseum(
@@ -222,17 +178,18 @@ data class ExhibitRpcResponse(
     val hall_number: String? = null
 )
 
-data class ExhibitInsertRequest(
-    val name: String,
-    val description: String,
-    val creation_year: Int,
-    val current_hall_id: Int? = null
-    // imageUrl можно добавить при необходимости
-)
-
-data class ExhibitCreatorRequest(
-    val exhibit_id: Int,
-    val creator_id: Int
+fun ExhibitRpcResponse.toExhibit() = Exhibit(
+    id = exhibit_id,
+    title = name,
+    description = description,
+    creationYear = creation_year,
+    hallId = current_hall_id,
+    museumId = museum_id,
+    authorId = creator_ids?.firstOrNull(),
+    authorName = author_name,
+    museumName = museum_name,
+    imageUrl = image_url,
+    hallNumber = hall_number
 )
 
 data class ExhibitDetailResponse(
@@ -249,11 +206,7 @@ data class ExhibitDetailResponse(
     val hall_number: String? = null
 )
 
-data class ExhibitCreatorResponse(
-    val exhibit_id: Int,
-    val creator_id: Int
-)
-data class AuthorUpdateRequest(
+data class AuthorInsertRequest(
     val name: String,
     val biography: String?,
     val birth_date: String?,
@@ -279,12 +232,12 @@ data class DeleteCreatorParams(
 )
 
 data class HallWithMuseumResponse(
-    val hall_id: Int,
-    val museum_id: Int,
-    val hall_number: String?,
+    @SerializedName("hall_id") val hallId: Int,
+    @SerializedName("museum_id") val museumId: Int,
+    @SerializedName("hall_number") val hallNumber: String?,
     val name: String?,
     val description: String?,
-    val is_storage: Boolean?,
+    @SerializedName("is_storage") val isStorage: Boolean?,
     val museum: MuseumNameResponse?
 )
 

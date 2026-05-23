@@ -8,9 +8,9 @@ sealed class MainState {
 }
 
 sealed class NavigationDestination(val requiresAuth: Boolean = false) {
-    object Login : NavigationDestination()  // 🔥 Было Registration
+    object Login : NavigationDestination()
 
-    object ExhibitManagement : NavigationDestination()  // 🔥 Требует авторизации
+    object ExhibitManagement : NavigationDestination()
     object AuthorManagement : NavigationDestination()
     object MuseumManagement : NavigationDestination()
     object HallManagement : NavigationDestination()

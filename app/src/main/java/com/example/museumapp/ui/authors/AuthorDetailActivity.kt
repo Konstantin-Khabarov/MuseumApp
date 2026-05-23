@@ -9,7 +9,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import coil.load
 import coil.transform.RoundedCornersTransformation
@@ -21,6 +23,7 @@ import com.example.museumapp.databinding.ActivityAuthorDetailBinding
 import com.example.museumapp.ui.exhibits.ExhibitAdapter
 import com.example.museumapp.ui.exhibits.ExhibitDetailActivity
 import kotlinx.coroutines.launch
+import com.example.museumapp.ui.main.MainActivity
 
 class AuthorDetailActivity : AppCompatActivity() {
 
@@ -35,7 +38,7 @@ class AuthorDetailActivity : AppCompatActivity() {
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == RESULT_OK) {
-            // Перезагружаем список и закрываем детали — пользователь вернётся к свежему списку
+
             setResult(RESULT_OK)
             finish()
         }
@@ -43,6 +46,11 @@ class AuthorDetailActivity : AppCompatActivity() {
 
     private fun setupToolbar() {
         binding.btnBack.setOnClickListener { finish() }
+        binding.btnHome.setOnClickListener {
+            val intent = Intent(this, MainActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            startActivity(intent)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -105,7 +113,8 @@ class AuthorDetailActivity : AppCompatActivity() {
 
     private fun observeViewModel() {
         lifecycleScope.launch {
-            viewModel.uiState.collect { state ->
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
                 when (state) {
                     is AuthorState.Loading -> setLoading(true)
                     is AuthorState.AuthorDeleted -> {
@@ -130,6 +139,7 @@ class AuthorDetailActivity : AppCompatActivity() {
                     }
                     else -> setLoading(false)
                 }
+            }
             }
         }
     }

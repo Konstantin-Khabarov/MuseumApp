@@ -6,7 +6,9 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.museumapp.MuseumApp
 import com.example.museumapp.R
@@ -14,9 +16,8 @@ import com.example.museumapp.data.model.Museum
 import com.example.museumapp.databinding.ActivityMuseumManagementBinding
 import com.example.museumapp.ui.authors.AuthorManagementActivity
 import com.example.museumapp.ui.exhibits.ExhibitManagementActivity
-import com.example.museumapp.ui.museums.MuseumAdapter
-import com.example.museumapp.ui.museums.MuseumDetailActivity
 import kotlinx.coroutines.launch
+import com.example.museumapp.ui.main.MainActivity
 
 class MuseumManagementActivity : AppCompatActivity() {
 
@@ -61,12 +62,11 @@ class MuseumManagementActivity : AppCompatActivity() {
     }
 
     private fun setupUI() {
-        // Восстановление предыдущих значений поиска
+
         val (name, city) = viewModel.getCurrentSearchValues()
         binding.editTextMuseumName.setText(name)
         binding.editTextMuseumCity.setText(city)
     }
-
 
     private fun setupRecyclerView() {
         museumAdapter = MuseumAdapter { museum ->
@@ -85,8 +85,10 @@ class MuseumManagementActivity : AppCompatActivity() {
     }
     private fun setupObservers() {
         lifecycleScope.launch {
-            viewModel.uiState.collect { state ->
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
                 handleState(state)
+            }
             }
         }
     }
@@ -94,7 +96,7 @@ class MuseumManagementActivity : AppCompatActivity() {
     private fun handleState(state: MuseumState) {
         when (state) {
             is MuseumState.Idle -> {
-                // Ничего не делаем
+
             }
             is MuseumState.Success -> {
                 showSearchResults(state.museums)
@@ -123,6 +125,11 @@ class MuseumManagementActivity : AppCompatActivity() {
         binding.btnBackArrow.setOnClickListener {
             viewModel.onEvent(MuseumEvent.NavigateBack)
         }
+        binding.btnHome.setOnClickListener {
+            val intent = Intent(this, MainActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            startActivity(intent)
+        }
 
         binding.btnSearch.setOnClickListener {
             hideKeyboard()
@@ -140,15 +147,10 @@ class MuseumManagementActivity : AppCompatActivity() {
             viewModel.onEvent(MuseumEvent.ResetSearch)
         }
 
-        // Кнопка добавления
         binding.fabAdd.setOnClickListener {
             viewModel.onEvent(MuseumEvent.AddMuseum)
         }
 
-        // Кнопка редактирования
-        /*binding.btnEditMuseum.setOnClickListener {
-            viewModel.onEvent(MuseumEvent.EditMuseum)
-        }*/
     }
 
     private fun showSearchResults(museums: List<Museum>) {
@@ -165,7 +167,7 @@ class MuseumManagementActivity : AppCompatActivity() {
 
     private fun navigateToEditMuseum() {
         showToast("Редактирование информации о музее")
-        // startActivity(Intent(this, EditMuseumActivity::class.java))
+
     }
 
     private fun setupBottomNav() {
@@ -196,7 +198,7 @@ class MuseumManagementActivity : AppCompatActivity() {
     }
 
     private fun hideKeyboard() {
-        val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+        val imm = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
         currentFocus?.let { imm.hideSoftInputFromWindow(it.windowToken, 0) }
     }
 

@@ -12,7 +12,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.museumapp.MuseumApp
 import com.example.museumapp.data.auth.AuthManager
@@ -22,12 +24,13 @@ import com.example.museumapp.ui.exhibits.ExhibitAdapter
 import com.example.museumapp.ui.exhibits.ExhibitDetailActivity
 import com.example.museumapp.ui.museums.MuseumDetailActivity
 import kotlinx.coroutines.launch
+import com.example.museumapp.ui.main.MainActivity
 
 class HallDetailActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityHallDetailBinding
     private val viewModel: HallViewModel by viewModels {
-        HallViewModelFactory((application as MuseumApp).hallRepository, (application as MuseumApp).exhibitRepository, (application as MuseumApp).museumRepository)
+        HallViewModelFactory((application as MuseumApp).hallRepository, (application as MuseumApp).museumRepository)
     }
 
     private lateinit var currentHall: HallItem
@@ -45,6 +48,11 @@ class HallDetailActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         binding.btnBack.setOnClickListener { finish() }
+        binding.btnHome.setOnClickListener {
+            val intent = Intent(this, MainActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            startActivity(intent)
+        }
 
         currentHall = HallItem(
             hallId = intent.getIntExtra("hall_id", -1),
@@ -106,7 +114,8 @@ class HallDetailActivity : AppCompatActivity() {
 
     private fun observeViewModel() {
         lifecycleScope.launch {
-            viewModel.navigationEvent.collect { event ->
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.navigationEvent.collect { event ->
                 if (event is HallNavigationEvent.ToMuseum) {
                     val m = event.museum
                     startActivity(Intent(this@HallDetailActivity, MuseumDetailActivity::class.java).apply {
@@ -116,9 +125,11 @@ class HallDetailActivity : AppCompatActivity() {
                     })
                 }
             }
+            }
         }
         lifecycleScope.launch {
-            viewModel.uiState.collect { state ->
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
                 when (state) {
                     is HallState.Loading -> setLoading(true)
                     is HallState.HallDeleted -> { showToast("Зал удалён"); setResult(RESULT_OK); finish() }
@@ -131,6 +142,7 @@ class HallDetailActivity : AppCompatActivity() {
                     }
                     else -> setLoading(false)
                 }
+            }
             }
         }
     }

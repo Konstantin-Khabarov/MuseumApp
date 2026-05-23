@@ -1,17 +1,18 @@
 package com.example.museumapp.data.model
 
+import com.google.gson.annotations.SerializedName
+
 data class Hall(
-    val hall_id: Int,
-    val museum_id: Int,
-    val hall_number: String?,
+    @SerializedName("hall_id") val hallId: Int,
+    @SerializedName("museum_id") val museumId: Int,
+    @SerializedName("hall_number") val hallNumber: String?,
     val name: String?,
     val description: String?,
-    val is_storage: Boolean?
+    @SerializedName("is_storage") val isStorage: Boolean?
 ) {
-    // 🔥 Удобное отображение в Spinner: "Зал №5 — Основная экспозиция"
     override fun toString(): String {
-        val number = hall_number?.let { "№$it" } ?: ""
-        val name = name?.takeIf { it.isNotBlank() } ?: ""
-        return listOf(number, name).filter { it.isNotEmpty() }.joinToString(" ")
+        val number = hallNumber?.let { "№$it" } ?: ""
+        val nm = name?.takeIf { it.isNotBlank() } ?: ""
+        return listOf(number, nm).filter { it.isNotEmpty() }.joinToString(" ")
     }
 }

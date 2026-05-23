@@ -7,7 +7,9 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.museumapp.MuseumApp
 import com.example.museumapp.R
@@ -16,6 +18,7 @@ import com.example.museumapp.ui.authors.AuthorManagementActivity
 import com.example.museumapp.ui.exhibits.ExhibitManagementActivity
 import com.example.museumapp.ui.museums.MuseumManagementActivity
 import kotlinx.coroutines.launch
+import com.example.museumapp.ui.main.MainActivity
 
 class HallManagementActivity : AppCompatActivity() {
 
@@ -23,7 +26,7 @@ class HallManagementActivity : AppCompatActivity() {
     private lateinit var hallAdapter: HallAdapter
 
     private val viewModel: HallViewModel by viewModels {
-        HallViewModelFactory((application as MuseumApp).hallRepository, (application as MuseumApp).exhibitRepository, (application as MuseumApp).museumRepository)
+        HallViewModelFactory((application as MuseumApp).hallRepository, (application as MuseumApp).museumRepository)
     }
 
     private val detailLauncher = registerForActivityResult(
@@ -81,7 +84,8 @@ class HallManagementActivity : AppCompatActivity() {
 
     private fun setupObservers() {
         lifecycleScope.launch {
-            viewModel.uiState.collect { state ->
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
                 when (state) {
                     is HallState.Loading -> setLoading(true)
                     is HallState.Success -> {
@@ -102,11 +106,17 @@ class HallManagementActivity : AppCompatActivity() {
                     HallState.ExhibitsLoading, is HallState.HallExhibitsLoaded -> {}
                 }
             }
+            }
         }
     }
 
     private fun setupListeners() {
         binding.btnBackArrow.setOnClickListener { finish() }
+        binding.btnHome.setOnClickListener {
+            val intent = Intent(this, MainActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            startActivity(intent)
+        }
 
         binding.btnSearch.setOnClickListener {
             hideKeyboard()
@@ -167,7 +177,7 @@ class HallManagementActivity : AppCompatActivity() {
     }
 
     private fun hideKeyboard() {
-        val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+        val imm = getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
         currentFocus?.let { imm.hideSoftInputFromWindow(it.windowToken, 0) }
     }
 

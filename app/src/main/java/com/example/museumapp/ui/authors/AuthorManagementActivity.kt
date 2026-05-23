@@ -7,17 +7,18 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.museumapp.MuseumApp
 import com.example.museumapp.R
-import com.example.museumapp.data.auth.AuthManager
 import com.example.museumapp.data.model.Author
 import com.example.museumapp.databinding.ActivityAuthorManagementBinding
-import com.example.museumapp.ui.exhibits.ExhibitEvent
 import com.example.museumapp.ui.exhibits.ExhibitManagementActivity
 import com.example.museumapp.ui.museums.MuseumManagementActivity
 import kotlinx.coroutines.launch
+import com.example.museumapp.ui.main.MainActivity
 
 class AuthorManagementActivity : AppCompatActivity() {
 
@@ -55,14 +56,14 @@ class AuthorManagementActivity : AppCompatActivity() {
     }
 
     private fun setupUI() {
-        // Восстановление предыдущих значений поиска (если есть)
+
         val name = viewModel.getCurrentSearchValues()
         binding.editTextAuthorName.setText(name)
     }
 
     private fun setupRecyclerView() {
         authorAdapter = AuthorAdapter { author ->
-            // Передаём автора в новый экран
+
             val intent = Intent(this, AuthorDetailActivity::class.java).apply {
                 putExtra("author_id", author.id)
                 putExtra("author_name", author.name)
@@ -79,8 +80,10 @@ class AuthorManagementActivity : AppCompatActivity() {
 
     private fun setupObservers() {
         lifecycleScope.launch {
-            viewModel.uiState.collect { state ->
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
                 handleState(state)
+            }
             }
         }
     }
@@ -89,10 +92,10 @@ class AuthorManagementActivity : AppCompatActivity() {
         when (state) {
             is AuthorState.Idle -> {
                 setLoading(false)
-                // Ничего не делаем
+
             }
             is AuthorState.Loading -> {
-                // 🔥 Показываем индикатор загрузки
+
                 setLoading(true)
             }
             is AuthorState.Success -> {
@@ -116,7 +119,7 @@ class AuthorManagementActivity : AppCompatActivity() {
             }
             AuthorState.AuthorAdded -> {
                 showToast("Автор добавлен")
-                viewModel.onEvent(AuthorEvent.LoadAllAuthors) // Обновить список
+                viewModel.onEvent(AuthorEvent.LoadAllAuthors)
                 viewModel.resetState()
             }
             AuthorState.NavigateToEditAuthor -> {
@@ -126,13 +129,17 @@ class AuthorManagementActivity : AppCompatActivity() {
         }
     }
 
-
     private fun setLoading(isLoading: Boolean) {
         binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
     }
     private fun setupListeners() {
         binding.btnBackArrow.setOnClickListener {
             viewModel.onEvent(AuthorEvent.NavigateBack)
+        }
+        binding.btnHome.setOnClickListener {
+            val intent = Intent(this, MainActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            startActivity(intent)
         }
 
         binding.btnSearch.setOnClickListener {
@@ -152,10 +159,6 @@ class AuthorManagementActivity : AppCompatActivity() {
             viewModel.onEvent(AuthorEvent.AddAuthor)
         }
 
-        // Кнопка редактирования
-        /*binding.btnEditAuthor.setOnClickListener {
-            viewModel.onEvent(AuthorEvent.EditAuthor)
-        }*/
     }
 
     private fun showSearchResults(authors: List<Author>) {
@@ -170,7 +173,7 @@ class AuthorManagementActivity : AppCompatActivity() {
 
     private fun navigateToEditAuthor() {
         showToast("Редактирование информации об авторе")
-        // startActivity(Intent(this, EditAuthorActivity::class.java))
+
     }
 
     private fun setupBottomNav() {

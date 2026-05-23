@@ -26,12 +26,12 @@ class MuseumAdapter(
         private val onItemClick: (Museum) -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(Museum: Museum) {
-            binding.textMuseumName.text = Museum.name
-            val location = listOfNotNull(Museum.city.takeIf { it.isNotBlank() }, Museum.country)
+        fun bind(museum: Museum) {
+            binding.textMuseumName.text = museum.name
+            val location = listOfNotNull(museum.city.takeIf { it.isNotBlank() }, museum.country)
                 .joinToString(", ")
             binding.textMuseumSubtitle.text = location.ifBlank { "Город не указан" }
-            binding.root.setOnClickListener { onItemClick(Museum) }
+            binding.root.setOnClickListener { onItemClick(museum) }
         }
     }
 }

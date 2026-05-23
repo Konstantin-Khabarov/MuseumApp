@@ -1,16 +1,13 @@
 package com.example.museumapp.ui.exhibits
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.museumapp.data.model.Exhibit
-import com.example.museumapp.data.model.Hall
 import com.example.museumapp.data.repository.AuthorRepository
-import com.example.museumapp.data.repository.AuthorSpinnerItem
 import com.example.museumapp.data.repository.ExhibitRepository
 import com.example.museumapp.data.repository.HallRepository
 import com.example.museumapp.data.repository.MuseumRepository
-import com.example.museumapp.data.repository.MuseumSpinnerItem
+import com.example.museumapp.util.parseError
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,24 +30,21 @@ class ExhibitViewModel(
     private val _navigationEvent = MutableSharedFlow<ExhibitNavigationEvent>()
     val navigationEvent: SharedFlow<ExhibitNavigationEvent> = _navigationEvent.asSharedFlow()
 
-    // ==================== ПАГИНАЦИЯ ====================
+    private var hallLoadJob: Job? = null
+
     companion object {
-        private const val TAG = "ExhibitViewModel"
-        private const val PAGE_SIZE = 20  // Загружаем по 20 записей — решает проблему timeout
+        private const val PAGE_SIZE = 20
     }
 
-    // Внутреннее состояние пагинации (не передаём в UI, работает внутри VM)
-    private var currentPage = 0                    // Текущая страница (0, 1, 2...)
-    private var allLoaded = false                  // Все данные загружены?
-    private var isLoadingMore = false              // Идёт ли загрузка следующей страницы?
+    private var currentPage = 0
+    private var allLoaded = false
+    private var isLoadingMore = false
 
     private var currentLoadJob: Job? = null
-    var currentExhibitId: Int = -1
     private var currentTitle: String? = null
     private var currentAuthorName: String? = null
     private var currentMuseumName: String? = null
 
-    // Кэш всех загруженных экспонатов (для пагинации: добавляем новые к старым)
     private val cachedExhibits = mutableListOf<Exhibit>()
 
     init {
@@ -60,10 +54,9 @@ class ExhibitViewModel(
     fun onEvent(event: ExhibitEvent) {
         when (event) {
             is ExhibitEvent.SearchExhibits -> {
-                // 🔥 Отменяем предыдущий запрос, если есть
+
                 currentLoadJob?.cancel()
 
-                // Сбрасываем пагинацию для нового поиска
                 currentTitle = event.title.ifEmpty { null }
                 currentAuthorName = event.authorName.ifEmpty { null }
                 currentMuseumName = event.museumName.ifEmpty { null }
@@ -112,31 +105,32 @@ class ExhibitViewModel(
             is ExhibitEvent.FetchAuthorForNav -> fetchAuthorForNav(event.authorId)
             is ExhibitEvent.FetchMuseumForNav -> fetchMuseumForNav(event.museumId)
             is ExhibitEvent.FetchHallForNav -> fetchHallForNav(event.hallId)
-            ExhibitEvent.NavigateBack -> {
-                _uiState.value = ExhibitState.NavigateBack
-            }
+            ExhibitEvent.NavigateBack -> _uiState.value = ExhibitState.NavigateBack
+            ExhibitEvent.LoadSpinnerData -> loadSpinnerData()
+            is ExhibitEvent.LoadEditFormData -> loadEditFormData(event.exhibitId)
+            is ExhibitEvent.LoadHallsForMuseum -> loadHallsForMuseum(event.museumId)
         }
     }
 
     private fun deleteExhibit(exhibitId: Int) {
         viewModelScope.launch {
-            _uiState.value = ExhibitState.Loading  // Показываем загрузку
+            _uiState.value = ExhibitState.Loading
 
             try {
                 val result = exhibitRepository.deleteExhibit(exhibitId)
 
                 result
                     .onSuccess {
-                        // 🔥 Успех: удаляем из кэша и уведомляем UI
+
                         exhibitRepository.removeExhibitFromCache(exhibitId)
                         _uiState.value = ExhibitState.NavigateBack
                     }
                     .onFailure { error ->
-                        _uiState.value = ExhibitState.Error("Ошибка удаления: ${error.message}")
+                        _uiState.value = ExhibitState.Error(parseError(error))
                     }
 
             } catch (e: Exception) {
-                _uiState.value = ExhibitState.Error("Ошибка: ${e.message}")
+                _uiState.value = ExhibitState.Error(parseError(e))
             }
         }
     }
@@ -166,33 +160,25 @@ class ExhibitViewModel(
 
                 result
                     .onSuccess { updatedExhibit ->
-                        // Обновляем в кэше
                         exhibitRepository.updateExhibitInCache(updatedExhibit)
-
-                        // Обновляем список в кэше
-                        // (если вы храните список отдельно)
                         _uiState.value = ExhibitState.NavigateBack
                     }
                     .onFailure { error ->
-                        _uiState.value = ExhibitState.Error("Ошибка обновления: ${error.message}")
+                        _uiState.value = ExhibitState.Error(parseError(error))
                     }
             } catch (e: Exception) {
-                _uiState.value = ExhibitState.Error("Ошибка: ${e.message}")
+                _uiState.value = ExhibitState.Error(parseError(e))
             }
         }
     }
 
     fun loadNextPage() {
-        // Защита от повторных запросов
         if (isLoadingMore || allLoaded) {
-            Log.d(TAG, "Pagination: skip (isLoading=$isLoadingMore, allLoaded=$allLoaded)")
             return
         }
 
         val nextPage = currentPage + 1
-        Log.d(TAG, "Pagination: loading page $nextPage")
 
-        // Если активен поиск — грузим следующую страницу с теми же фильтрами
         if (currentTitle != null || currentAuthorName != null || currentMuseumName != null) {
             performSearch(
                 title = currentTitle,
@@ -201,7 +187,6 @@ class ExhibitViewModel(
                 page = nextPage
             )
         } else {
-            // Иначе грузим следующую страницу всех экспонатов
             loadExhibitsPage(page = nextPage, isInitialLoad = false)
         }
     }
@@ -209,14 +194,13 @@ class ExhibitViewModel(
     private fun loadExhibitsPage(page: Int, isInitialLoad: Boolean) {
         currentLoadJob?.cancel()
         currentLoadJob = viewModelScope.launch {
-            // Показываем загрузку только при первоначальной загрузке
+
             if (isInitialLoad || page == 0) {
                 _uiState.value = ExhibitState.Loading
             }
             isLoadingMore = true
 
             try {
-                // 🔥 Важно: Repository должен использовать пагинацию!
                 val newExhibits = exhibitRepository.getExhibitsPage(
                     page = page,
                     pageSize = PAGE_SIZE
@@ -231,20 +215,15 @@ class ExhibitViewModel(
                 allLoaded = newExhibits.size < PAGE_SIZE
                 isLoadingMore = false
 
-                Log.d(TAG, "Loaded page $page: ${newExhibits.size} items, total: ${cachedExhibits.size}")
-
                 _uiState.value = ExhibitState.Success(cachedExhibits.toList())
 
             } catch (e: Exception) {
-                Log.e(TAG, "Error loading exhibits page $page", e)
                 isLoadingMore = false
 
-                // При ошибке на первой странице показываем ошибку, при подгрузке — оставляем старые данные
                 if (isInitialLoad) {
-                    _uiState.value = ExhibitState.Error("Ошибка загрузки: ${e.message}")
+                    _uiState.value = ExhibitState.Error(parseError(e))
                 } else {
-                    // Можно показать мягкое уведомление, но не прерывать список
-                    _uiState.value = ExhibitState.ShowMessage("Не удалось загрузить ещё: ${e.message}")
+                    _uiState.value = ExhibitState.ShowMessage("Не удалось загрузить ещё: ${parseError(e)}")
                 }
             }
         }
@@ -257,15 +236,15 @@ class ExhibitViewModel(
         page: Int
     ) {
         currentLoadJob?.cancel()
-        viewModelScope.launch {
-            // Показываем загрузку только при первом запросе поиска
+        currentLoadJob = viewModelScope.launch {
+
             if (page == 0) {
-                _uiState.value = ExhibitState.Idle
+                _uiState.value = ExhibitState.Loading
             }
             isLoadingMore = true
 
             try {
-                // Repository должен поддерживать пагинацию в поиске!
+
                 val newExhibits = exhibitRepository.searchExhibits(
                     title = title,
                     authorName = authorName,
@@ -275,26 +254,20 @@ class ExhibitViewModel(
                 )
 
                 if (page == 0) {
-                    // Новый поиск — заменяем кэш
+
                     cachedExhibits.clear()
                 }
-                    // Подгрузка результатов поиска — добавляем к кэшу
+
                 cachedExhibits.addAll(newExhibits)
 
-
-                // Сохраняем параметры поиска для следующих страниц
                 currentTitle = title
                 currentAuthorName = authorName
                 currentMuseumName = museumName
 
-                // Обновляем состояние пагинации
                 currentPage = page
                 allLoaded = newExhibits.size < PAGE_SIZE
                 isLoadingMore = false
 
-                Log.d(TAG, "Search: loaded ${newExhibits.size} exhibits (page $page), total: ${cachedExhibits.size}")
-
-                // Отправляем результат в UI
                 _uiState.value = if (cachedExhibits.isEmpty() && page == 0) {
                     ExhibitState.ShowMessage("Экспонаты не найдены")
                 } else {
@@ -302,13 +275,12 @@ class ExhibitViewModel(
                 }
 
             } catch (e: Exception) {
-                Log.e(TAG, "Error searching exhibits", e)
                 isLoadingMore = false
 
                 if (page == 0) {
-                    _uiState.value = ExhibitState.Error("Ошибка поиска: ${e.message}")
+                    _uiState.value = ExhibitState.Error(parseError(e))
                 } else {
-                    _uiState.value = ExhibitState.ShowMessage("Не удалось загрузить ещё: ${e.message}")
+                    _uiState.value = ExhibitState.ShowMessage("Не удалось загрузить ещё: ${parseError(e)}")
                 }
             }
         }
@@ -316,24 +288,21 @@ class ExhibitViewModel(
 
     fun loadExhibitDetails(exhibitId: Int) {
         viewModelScope.launch {
-            _uiState.value = ExhibitState.Loading // Можно убрать, так как будет мгновенно
+            _uiState.value = ExhibitState.Loading
 
-            // 🔥 Вызываем метод репозитория
             val result = exhibitRepository.getExhibitById(exhibitId)
 
             result.onSuccess { exhibit ->
-                // 🔥 Эмитим состояние с полными данными
+
                 _uiState.value = ExhibitState.ExhibitDetailsLoaded(exhibit)
             }.onFailure { error ->
-                // Если кэш пуст (редкий кейс), можно попробовать загрузить из сети
-                // или показать ошибку
+
                 _uiState.value = ExhibitState.Error("Данные не найдены. Обновите список.")
             }
         }
     }
 
     private fun resetSearch() {
-        Log.d(TAG, "Reset search called")
 
         currentLoadJob?.cancel()
 
@@ -345,19 +314,16 @@ class ExhibitViewModel(
         isLoadingMore = false
         cachedExhibits.clear()
 
-        //_uiState.value = ExhibitState.ShowMessage("Поиск сброшен")
-
         loadExhibitsPage(page = 0, isInitialLoad = true)
     }
 
-    // Обновлено для возврата трех значений
     private fun fetchAuthorForNav(authorId: Int) {
         viewModelScope.launch {
             try {
                 val author = authorRepository.getAuthorById(authorId)
                 if (author != null) _navigationEvent.emit(ExhibitNavigationEvent.ToAuthor(author))
             } catch (e: Exception) {
-                _uiState.value = ExhibitState.Error("Не удалось загрузить автора")
+                _uiState.value = ExhibitState.Error(parseError(e))
             }
         }
     }
@@ -368,7 +334,7 @@ class ExhibitViewModel(
                 val museum = museumRepository.getMuseumById(museumId)
                 if (museum != null) _navigationEvent.emit(ExhibitNavigationEvent.ToMuseum(museum))
             } catch (e: Exception) {
-                _uiState.value = ExhibitState.Error("Не удалось загрузить музей")
+                _uiState.value = ExhibitState.Error(parseError(e))
             }
         }
     }
@@ -379,7 +345,7 @@ class ExhibitViewModel(
                 val hall = hallRepository.getHallById(hallId)
                 if (hall != null) _navigationEvent.emit(ExhibitNavigationEvent.ToHall(hall))
             } catch (e: Exception) {
-                _uiState.value = ExhibitState.Error("Не удалось загрузить зал")
+                _uiState.value = ExhibitState.Error(parseError(e))
             }
         }
     }
@@ -408,7 +374,7 @@ class ExhibitViewModel(
             _uiState.value = ExhibitState.Loading
 
             try {
-                // Валидация
+
                 if (title.isBlank()) {
                     _uiState.value = ExhibitState.Error("Название экспоната обязательно")
                     return@launch
@@ -423,27 +389,60 @@ class ExhibitViewModel(
                     imageUrl = imageUrl
                 )
 
-                // 🔥 Добавляем новый экспонат в кэш и уведомляем UI
-                cachedExhibits.add(0, newExhibit)  // В начало списка
+                cachedExhibits.add(0, newExhibit)
                 _uiState.value = ExhibitState.Success(cachedExhibits.toList())
 
-                // Можно отправить событие навигации назад
                 _uiState.value = ExhibitState.NavigateBack
 
             } catch (e: Exception) {
-                Log.e(TAG, "Error adding exhibit", e)
-                _uiState.value = ExhibitState.Error("Ошибка: ${e.message}")
+                _uiState.value = ExhibitState.Error(parseError(e))
             }
         }
     }
 
-    suspend fun getAuthorsForSpinner(): List<AuthorSpinnerItem> {
-        return exhibitRepository.getAuthorsForSpinner()
+    private fun loadSpinnerData() {
+        viewModelScope.launch {
+            _uiState.value = ExhibitState.Loading
+            try {
+                val authors = exhibitRepository.getAuthorsForSpinner()
+                val museums = exhibitRepository.getMuseumsForSpinner()
+                _uiState.value = ExhibitState.SpinnerDataLoaded(authors, museums)
+            } catch (e: Exception) {
+                _uiState.value = ExhibitState.Error(parseError(e))
+            }
+        }
     }
-    suspend fun getMuseumsForSpinner(): List<MuseumSpinnerItem> {
-        return exhibitRepository.getMuseumsForSpinner()
+
+    private fun loadEditFormData(exhibitId: Int) {
+        viewModelScope.launch {
+            _uiState.value = ExhibitState.Loading
+            try {
+                val exhibitResult = exhibitRepository.getExhibitById(exhibitId)
+                val authors = exhibitRepository.getAuthorsForSpinner()
+                val museums = exhibitRepository.getMuseumsForSpinner()
+
+                val exhibit = exhibitResult.getOrElse {
+                    _uiState.value = ExhibitState.Error("Не удалось загрузить экспонат")
+                    return@launch
+                }
+
+                val halls = exhibit.museumId?.let { exhibitRepository.getHallsByMuseumId(it) } ?: emptyList()
+                _uiState.value = ExhibitState.EditFormLoaded(exhibit, authors, museums, halls)
+            } catch (e: Exception) {
+                _uiState.value = ExhibitState.Error(parseError(e))
+            }
+        }
     }
-    suspend fun getHallsByMuseumId(museumId: Int): List<Hall> {
-        return exhibitRepository.getHallsByMuseumId(museumId)
+
+    private fun loadHallsForMuseum(museumId: Int) {
+        hallLoadJob?.cancel()
+        hallLoadJob = viewModelScope.launch {
+            try {
+                val halls = exhibitRepository.getHallsByMuseumId(museumId)
+                _uiState.value = ExhibitState.HallsLoaded(halls)
+            } catch (e: Exception) {
+                _uiState.value = ExhibitState.Error(parseError(e))
+            }
+        }
     }
 }

@@ -1,15 +1,19 @@
 package com.example.museumapp.ui.museums
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.museumapp.MuseumApp
 import com.example.museumapp.data.auth.AuthManager
 import com.example.museumapp.databinding.ActivityEditMuseumBinding
 import kotlinx.coroutines.launch
+import com.example.museumapp.ui.main.MainActivity
 
 class EditMuseumActivity : AppCompatActivity() {
 
@@ -34,6 +38,11 @@ class EditMuseumActivity : AppCompatActivity() {
 
         fillForm()
         binding.btnBack.setOnClickListener { finish() }
+        binding.btnHome.setOnClickListener {
+            val intent = Intent(this, MainActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            startActivity(intent)
+        }
         setupListeners()
         observeViewModel()
     }
@@ -53,18 +62,39 @@ class EditMuseumActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
             val name = binding.editTextName.text.toString().trim()
+            val city = binding.editTextCity.text.toString().trim()
+            val country = binding.editTextCountry.text.toString().trim()
+            val address = binding.editTextAddress.text.toString().trim()
+
+            var hasError = false
             if (name.isEmpty()) {
                 binding.editTextName.error = "Обязательное поле"
-                binding.editTextName.requestFocus()
+                if (!hasError) { binding.editTextName.requestFocus(); hasError = true }
+            }
+            if (city.isEmpty()) {
+                binding.editTextCity.error = "Обязательное поле"
+                if (!hasError) { binding.editTextCity.requestFocus(); hasError = true }
+            }
+            if (country.isEmpty()) {
+                binding.editTextCountry.error = "Обязательное поле"
+                if (!hasError) { binding.editTextCountry.requestFocus(); hasError = true }
+            }
+            if (address.isEmpty()) {
+                binding.editTextAddress.error = "Обязательное поле"
+                if (!hasError) { binding.editTextAddress.requestFocus(); hasError = true }
+            }
+            if (hasError) {
+                showToast("Заполните все обязательные поля (*)")
                 return@setOnClickListener
             }
+
             viewModel.onEvent(
                 MuseumEvent.UpdateMuseum(
                     museumId = museumId,
                     name = name,
-                    address = binding.editTextAddress.text.toString().trim(),
-                    city = binding.editTextCity.text.toString().trim(),
-                    country = binding.editTextCountry.text.toString().trim().takeIf { it.isNotBlank() },
+                    address = address,
+                    city = city,
+                    country = country,
                     website = binding.editTextWebsite.text.toString().trim().takeIf { it.isNotBlank() }
                 )
             )
@@ -73,7 +103,8 @@ class EditMuseumActivity : AppCompatActivity() {
 
     private fun observeViewModel() {
         lifecycleScope.launch {
-            viewModel.uiState.collect { state ->
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
                 when (state) {
                     is MuseumState.Loading -> setLoading(true)
                     is MuseumState.MuseumUpdated -> {
@@ -87,6 +118,7 @@ class EditMuseumActivity : AppCompatActivity() {
                     }
                     else -> {}
                 }
+            }
             }
         }
     }

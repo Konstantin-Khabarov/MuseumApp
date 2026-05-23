@@ -1,7 +1,7 @@
 package com.example.museumapp.data.auth
 
 sealed class AuthState {
-    object Checking : AuthState()          // Идёт проверка сессии
-    object Authenticated : AuthState()     // Пользователь вошёл
-    object Unauthenticated : AuthState()   // Гость
+    object Checking : AuthState()
+    object Authenticated : AuthState()
+    object Unauthenticated : AuthState()
 }

@@ -14,7 +14,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 
-
 class MuseumApp : Application() {
     val authorRepository by lazy { AuthorRepository() }
     val exhibitRepository by lazy { ExhibitRepository() }
@@ -55,11 +54,7 @@ class MuseumApp : Application() {
                     loadAuthors = { exhibitRepository.getAuthorsForSpinner() }
                 )
 
-                android.util.Log.d("MuseumApp", "Reference data preloaded: museums=${DataCache::class.java.getDeclaredField("_museums").let { it.isAccessible = true; it.get(DataCache) }}, authors=...")
-            } catch (e: Exception) {
-                android.util.Log.e("MuseumApp", "Preload failed: ${e.message}", e)
-                // Не критично — данные загрузятся при первом запросе
-            }
+            } catch (e: Exception) {}
         }
     }
 }

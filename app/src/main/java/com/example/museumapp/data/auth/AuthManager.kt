@@ -1,14 +1,15 @@
 package com.example.museumapp.data.auth
 
+import com.example.museumapp.BuildConfig
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.gotrue.Auth
+import io.github.jan.supabase.gotrue.SessionStatus
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
 import io.github.jan.supabase.postgrest.Postgrest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,14 +17,11 @@ import kotlinx.coroutines.launch
 
 object AuthManager {
 
-    private const val SUPABASE_URL = "https://bxrgvanoxllcwqvzkvny.supabase.co"
-    private const val SUPABASE_ANON_KEY = "sb_publishable_JCl9V3yQIob6BLqreORDhg_bFucn7zf"
-
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     val supabase = createSupabaseClient(
-        supabaseUrl = SUPABASE_URL,
-        supabaseKey = SUPABASE_ANON_KEY
+        supabaseUrl = BuildConfig.SUPABASE_URL,
+        supabaseKey = BuildConfig.SUPABASE_ANON_KEY
     ) {
         install(Auth) {
             autoLoadFromStorage = true
@@ -37,20 +35,14 @@ object AuthManager {
 
     init {
         scope.launch {
-            // Ждём немного, чтобы сессия успела загрузиться из хранилища
-            delay(1000)
-            checkAuthStatus()
-
-
-        }
-    }
-
-    private fun checkAuthStatus() {
-        val user = supabase.auth.currentUserOrNull()   // свойство, без вызова
-        _authState.value = if (user != null) {
-            AuthState.Authenticated
-        } else {
-            AuthState.Unauthenticated
+            supabase.auth.sessionStatus.collect { status ->
+                _authState.value = when (status) {
+                    is SessionStatus.Authenticated -> AuthState.Authenticated
+                    is SessionStatus.NotAuthenticated -> AuthState.Unauthenticated
+                    is SessionStatus.LoadingFromStorage -> AuthState.Checking
+                    is SessionStatus.NetworkError -> AuthState.Unauthenticated
+                }
+            }
         }
     }
 
@@ -60,7 +52,6 @@ object AuthManager {
                 this.email = email
                 this.password = password
             }
-            checkAuthStatus()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -70,28 +61,22 @@ object AuthManager {
     suspend fun logout(): Result<Unit> {
         return try {
             supabase.auth.signOut()
-            checkAuthStatus()
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    fun isAuthenticated(): Boolean {
-        return supabase.auth.currentUserOrNull() != null
-    }
+    fun isAuthenticated(): Boolean = supabase.auth.currentUserOrNull() != null
 
-    val currentUser
-        get() = supabase.auth.currentUserOrNull()
+    val currentUser get() = supabase.auth.currentUserOrNull()
 
     val authToken: String?
         get() = supabase.auth.currentAccessTokenOrNull()?.let { "Bearer $it" }
 
-    fun getApiHeaders(): Map<String, String> {
-        return mapOf(
-            "apikey" to SUPABASE_ANON_KEY,
-            "Authorization" to (authToken ?: "Bearer $SUPABASE_ANON_KEY"),
-            "Content-Type" to "application/json"
-        )
-    }
+    fun getApiHeaders(): Map<String, String> = mapOf(
+        "apikey" to BuildConfig.SUPABASE_ANON_KEY,
+        "Authorization" to (authToken ?: "Bearer ${BuildConfig.SUPABASE_ANON_KEY}"),
+        "Content-Type" to "application/json"
+    )
 }

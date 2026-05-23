@@ -1,22 +1,24 @@
 package com.example.museumapp.ui.exhibits
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.museumapp.MuseumApp
 import com.example.museumapp.data.auth.AuthManager
+import com.example.museumapp.data.model.Exhibit
 import com.example.museumapp.data.model.Hall
 import com.example.museumapp.data.repository.AuthorSpinnerItem
 import com.example.museumapp.data.repository.MuseumSpinnerItem
 import com.example.museumapp.databinding.ActivityEditExhibitBinding
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
+import com.example.museumapp.ui.main.MainActivity
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class EditExhibitActivity : AppCompatActivity() {
 
@@ -33,7 +35,6 @@ class EditExhibitActivity : AppCompatActivity() {
     private var exhibitId: Int = -1
     private var museumsList = listOf<MuseumSpinnerItem>()
     private var authorsList = listOf<AuthorSpinnerItem>()
-    private var hallsList = listOf<Hall>()
 
     private var selectedMuseumId: Int? = null
     private var selectedHallId: Int? = null
@@ -52,54 +53,65 @@ class EditExhibitActivity : AppCompatActivity() {
         if (exhibitId == -1) { showToast("Ошибка: не передан ID экспоната"); finish(); return }
 
         binding.btnBack.setOnClickListener { finish() }
-        loadAllData()
-        setupSaveListener()
+        binding.btnHome.setOnClickListener {
+            startActivity(Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            })
+        }
+
         observeViewModel()
+        setupSaveListener()
+
+        viewModel.onEvent(ExhibitEvent.LoadEditFormData(exhibitId))
     }
 
-    private fun loadAllData() {
-        setLoading(true)
+    private fun observeViewModel() {
         lifecycleScope.launch {
-            try {
-                val repo = (application as MuseumApp).exhibitRepository
-                val museums = async { repo.getMuseumsForSpinner() }
-                val authors = async { repo.getAuthorsForSpinner() }
-                val exhibit = async { repo.getExhibitById(exhibitId) }
-
-                val museumsResult = museums.await()
-                val authorsResult = authors.await()
-                val exhibitResult = exhibit.await()
-
-                withContext(Dispatchers.Main) {
-                    museumsList = museumsResult
-                    authorsList = authorsResult
-
-                    if (exhibitResult.isSuccess) {
-                        val e = exhibitResult.getOrNull()!!
-                        initialMuseumId = e.museumId
-                        initialHallId = e.hallId
-                        initialAuthorId = e.authorId
-
-                        binding.editTextTitle.setText(e.title)
-                        binding.editTextDescription.setText(e.description)
-                        binding.editTextYear.setText(e.creationYear.toString())
-                        binding.editTextImageUrl.setText(e.imageUrl ?: "")
-
-                        setupAuthorSpinner()
-                        setupMuseumSpinner()
-                    } else {
-                        showToast("Не удалось загрузить данные"); finish()
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
+                when (state) {
+                    is ExhibitState.Loading -> setLoading(true)
+                    is ExhibitState.EditFormLoaded -> {
+                        fillForm(state.exhibit)
+                        museumsList = state.museums
+                        authorsList = state.authors
+                        initialMuseumId = state.exhibit.museumId
+                        initialHallId = state.exhibit.hallId
+                        initialAuthorId = state.exhibit.authorId
+                        setupAuthorSpinner(state.authors)
+                        setupMuseumSpinner(state.museums)
+                        setupHallSpinner(state.halls)
+                        setLoading(false)
                     }
-                    setLoading(false)
+                    is ExhibitState.HallsLoaded -> {
+                        setupHallSpinner(state.halls)
+                        setLoading(false)
+                    }
+                    is ExhibitState.NavigateBack -> {
+                        showToast("Экспонат обновлён")
+                        setResult(RESULT_OK)
+                        finish()
+                    }
+                    is ExhibitState.Error -> {
+                        showToast(state.message)
+                        setLoading(false)
+                    }
+                    else -> {}
                 }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) { showToast("Ошибка: ${e.message}"); setLoading(false); finish() }
+            }
             }
         }
     }
 
-    private fun setupAuthorSpinner() {
-        val items = listOf(AuthorSpinnerItem(-1, "Без автора")) + authorsList
+    private fun fillForm(exhibit: Exhibit) {
+        binding.editTextTitle.setText(exhibit.title)
+        binding.editTextDescription.setText(exhibit.description)
+        binding.editTextYear.setText(exhibit.creationYear.toString())
+        binding.editTextImageUrl.setText(exhibit.imageUrl ?: "")
+    }
+
+    private fun setupAuthorSpinner(authors: List<AuthorSpinnerItem>) {
+        val items = listOf(AuthorSpinnerItem(-1, "Без автора")) + authors
         binding.spinnerAuthor.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, items)
         val idx = items.indexOfFirst { it.id == initialAuthorId }.coerceAtLeast(0)
         binding.spinnerAuthor.setSelection(idx)
@@ -113,31 +125,30 @@ class EditExhibitActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupMuseumSpinner() {
-        val items = listOf(MuseumSpinnerItem(-1, "Выберите музей")) + museumsList
+    private fun setupMuseumSpinner(museums: List<MuseumSpinnerItem>) {
+        val items = listOf(MuseumSpinnerItem(-1, "Выберите музей")) + museums
         binding.spinnerMuseum.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, items)
         val idx = items.indexOfFirst { it.id == initialMuseumId }.coerceAtLeast(0)
         binding.spinnerMuseum.setSelection(idx)
-        if (idx > 0) { selectedMuseumId = items[idx].id; loadHalls(selectedMuseumId!!) }
+        if (idx > 0) selectedMuseumId = items[idx].id
 
         binding.spinnerMuseum.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
             override fun onItemSelected(p: android.widget.AdapterView<*>, v: View?, pos: Int, id: Long) {
                 val newId = if (pos == 0) null else items[pos].id
                 if (newId != selectedMuseumId) {
-                    selectedMuseumId = newId; selectedHallId = null
-                    if (newId != null) loadHalls(newId) else hideHallSpinner()
+                    selectedMuseumId = newId
+                    selectedHallId = null
+                    if (newId != null) {
+                        viewModel.onEvent(ExhibitEvent.LoadHallsForMuseum(newId))
+                    } else {
+                        hideHallSpinner()
+                    }
                 }
             }
-            override fun onNothingSelected(p: android.widget.AdapterView<*>) { selectedMuseumId = null; hideHallSpinner() }
-        }
-    }
-
-    private fun loadHalls(museumId: Int) {
-        lifecycleScope.launch {
-            try {
-                val halls = withContext(Dispatchers.IO) { viewModel.getHallsByMuseumId(museumId) }
-                withContext(Dispatchers.Main) { hallsList = halls; setupHallSpinner(halls) }
-            } catch (e: Exception) { showToast("Ошибка загрузки залов") }
+            override fun onNothingSelected(p: android.widget.AdapterView<*>) {
+                selectedMuseumId = null
+                hideHallSpinner()
+            }
         }
     }
 
@@ -150,13 +161,13 @@ class EditExhibitActivity : AppCompatActivity() {
         binding.spinnerHall.adapter = ArrayAdapter(
             this, android.R.layout.simple_spinner_dropdown_item, items.map { it.toString() }
         )
-        val idx = items.indexOfFirst { it.hall_id == initialHallId }.coerceAtLeast(0)
+        val idx = items.indexOfFirst { it.hallId == initialHallId }.coerceAtLeast(0)
         binding.spinnerHall.setSelection(idx)
-        selectedHallId = if (idx == 0) null else items[idx].hall_id
+        selectedHallId = if (idx == 0) null else items[idx].hallId
 
         binding.spinnerHall.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
             override fun onItemSelected(p: android.widget.AdapterView<*>, v: View?, pos: Int, id: Long) {
-                selectedHallId = if (pos == 0) null else items[pos].hall_id
+                selectedHallId = if (pos == 0) null else items[pos].hallId
             }
             override fun onNothingSelected(p: android.widget.AdapterView<*>) { selectedHallId = null }
         }
@@ -170,32 +181,34 @@ class EditExhibitActivity : AppCompatActivity() {
 
     private fun setupSaveListener() {
         binding.btnSave.setOnClickListener {
-            if (!AuthManager.isAuthenticated()) { showToast("Для редактирования необходимо войти в систему"); return@setOnClickListener }
-            val title = binding.editTextTitle.text.toString().trim()
-            if (title.isEmpty()) { binding.editTextTitle.error = "Обязательное поле"; binding.editTextTitle.requestFocus(); return@setOnClickListener }
-
-            viewModel.onEvent(ExhibitEvent.UpdateExhibit(
-                exhibitId = exhibitId,
-                title = title,
-                description = binding.editTextDescription.text.toString().trim(),
-                creationYear = binding.editTextYear.text.toString().toIntOrNull() ?: 0,
-                hallId = selectedHallId,
-                authorId = selectedAuthorId,
-                imageUrl = binding.editTextImageUrl.text.toString().trim().takeIf { it.isNotBlank() }
-            ))
-        }
-    }
-
-    private fun observeViewModel() {
-        lifecycleScope.launch {
-            viewModel.uiState.collect { state ->
-                when (state) {
-                    is ExhibitState.Loading -> setLoading(true)
-                    is ExhibitState.Error -> { showToast(state.message); setLoading(false) }
-                    is ExhibitState.NavigateBack -> { showToast("Экспонат обновлён"); setResult(RESULT_OK); finish() }
-                    else -> setLoading(false)
-                }
+            if (!AuthManager.isAuthenticated()) {
+                showToast("Для редактирования необходимо войти в систему")
+                return@setOnClickListener
             }
+            val title = binding.editTextTitle.text.toString().trim()
+            if (title.isEmpty()) {
+                binding.editTextTitle.error = "Обязательное поле"
+                binding.editTextTitle.requestFocus()
+                return@setOnClickListener
+            }
+            val currentYear = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR)
+            val yearInt = binding.editTextYear.text.toString().toIntOrNull()
+            if (yearInt == null || yearInt < 1 || yearInt > currentYear) {
+                binding.editTextYear.error = "Укажите год от 1 до $currentYear"
+                binding.editTextYear.requestFocus()
+                return@setOnClickListener
+            }
+            viewModel.onEvent(
+                ExhibitEvent.UpdateExhibit(
+                    exhibitId = exhibitId,
+                    title = title,
+                    description = binding.editTextDescription.text.toString().trim(),
+                    creationYear = yearInt,
+                    hallId = selectedHallId,
+                    authorId = selectedAuthorId,
+                    imageUrl = binding.editTextImageUrl.text.toString().trim().takeIf { it.isNotBlank() }
+                )
+            )
         }
     }
 

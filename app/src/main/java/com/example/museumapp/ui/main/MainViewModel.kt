@@ -9,11 +9,9 @@ import kotlinx.coroutines.launch
 
 class MainViewModel : ViewModel() {
 
-    // Состояние UI
     private val _uiState = MutableStateFlow<MainState>(MainState.Idle)
     val uiState: StateFlow<MainState> = _uiState.asStateFlow()
 
-    // Обработка нажатий кнопок
     fun onLoginClicked() {
         viewModelScope.launch {
             _uiState.value = MainState.NavigateTo(NavigationDestination.Login)
@@ -44,7 +42,6 @@ class MainViewModel : ViewModel() {
         }
     }
 
-    // Сброс состояния после обработки
     fun resetState() {
         viewModelScope.launch {
             _uiState.value = MainState.Idle

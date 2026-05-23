@@ -1,6 +1,5 @@
 package com.example.museumapp.data.repository
 
-import android.util.Log
 import com.example.museumapp.data.auth.AuthManager
 import com.example.museumapp.data.cache.DataCache
 import com.example.museumapp.data.model.Exhibit
@@ -49,15 +48,7 @@ class HallRepository {
             apiKey = headers["apikey"]!!,
             token = headers["Authorization"]!!,
             params = mapOf("p_hall_id" to hallId)
-        ).map { r ->
-            Exhibit(
-                id = r.exhibit_id, title = r.name, description = r.description,
-                creationYear = r.creation_year, hallId = r.current_hall_id,
-                museumId = r.museum_id, authorId = r.creator_ids?.firstOrNull(),
-                authorName = r.author_name, museumName = r.museum_name,
-                imageUrl = r.image_url, hallNumber = r.hall_number
-            )
-        }
+        ).map { it.toExhibit() }
     }
 
     suspend fun getHallById(id: Int): HallItem? {
@@ -95,7 +86,6 @@ class HallRepository {
             )
             Result.success(Unit)
         } catch (e: Exception) {
-            Log.e("HallRepository", "Add error: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -118,7 +108,6 @@ class HallRepository {
             if (!response.isSuccessful) Result.failure(Exception("HTTP ${response.code()}: ${response.errorBody()?.string()}"))
             else Result.success(Unit)
         } catch (e: Exception) {
-            Log.e("HallRepository", "Update error: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -134,18 +123,17 @@ class HallRepository {
             if (!response.isSuccessful) Result.failure(Exception("HTTP ${response.code()}: ${response.errorBody()?.string()}"))
             else Result.success(Unit)
         } catch (e: Exception) {
-            Log.e("HallRepository", "Delete error: ${e.message}", e)
             Result.failure(e)
         }
     }
 
     private fun HallWithMuseumResponse.toHallItem() = HallItem(
-        hallId = hall_id,
-        museumId = museum_id,
-        hallNumber = hall_number,
+        hallId = hallId,
+        museumId = museumId,
+        hallNumber = hallNumber,
         name = name,
         museumName = museum?.name,
         description = description,
-        isStorage = is_storage
+        isStorage = isStorage
     )
 }

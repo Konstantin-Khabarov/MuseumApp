@@ -12,7 +12,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.museumapp.ui.authors.AuthorDetailActivity
 import com.example.museumapp.ui.halls.HallDetailActivity
 import com.example.museumapp.ui.museums.MuseumDetailActivity
@@ -24,6 +26,7 @@ import com.example.museumapp.data.auth.AuthManager
 import com.example.museumapp.data.model.Exhibit
 import com.example.museumapp.databinding.ActivityExhibitDetailBinding
 import kotlinx.coroutines.launch
+import com.example.museumapp.ui.main.MainActivity
 
 class ExhibitDetailActivity : AppCompatActivity() {
 
@@ -48,23 +51,9 @@ class ExhibitDetailActivity : AppCompatActivity() {
         binding = ActivityExhibitDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        /*val exhibit = Exhibit(
-            id = intent.getIntExtra("exhibit_id", -1),
-            title = intent.getStringExtra("exhibit_title") ?: "",
-            description = intent.getStringExtra("exhibit_description") ?: "",
-            creationYear = intent.getIntExtra("exhibit_creation_year", 0),
-            authorId = intent.getIntExtra("exhibit_author_id", -1).takeIf { it != -1 },
-            museumId = intent.getIntExtra("exhibit_museum_id", -1).takeIf { it != -1 },
-            authorName = intent.getStringExtra("exhibit_author_name"),
-            museumName = intent.getStringExtra("exhibit_museum_name"),
-            //imageUrl = intent.getStringExtra("exhibit_image_url")
-        )*/
         currentExhibitId = intent.getIntExtra("exhibit_id", -1)
         viewModel.loadExhibitDetails(currentExhibitId)
 
-        //currentExhibitId = exhibit.id
-
-        //displayExhibit(exhibit)
         setupToolbar()
         setupListeners()
         viewModel.loadExhibitDetails(currentExhibitId)
@@ -75,33 +64,28 @@ class ExhibitDetailActivity : AppCompatActivity() {
         binding.btnBack.setOnClickListener {
             finish()
         }
+        binding.btnHome.setOnClickListener {
+            val intent = Intent(this, MainActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            startActivity(intent)
+        }
     }
 
     private fun setupListeners() {
-        // ✏️ Редактирование (заглушка)
+
         binding.btnEdit.setOnClickListener {
             if (!AuthManager.isAuthenticated()) {
                 showToast("Для редактирования необходимо войти в систему")
                 return@setOnClickListener
             }
 
-            /*val intent = Intent(this, EditExhibitActivity::class.java).apply {
-                putExtra("exhibit_id", currentExhibitId)
-                putExtra("exhibit_title", intent.getStringExtra("exhibit_title") ?: "")
-                putExtra("exhibit_description", intent.getStringExtra("exhibit_description") ?: "")
-                putExtra("exhibit_creation_year", intent.getIntExtra("exhibit_creation_year", 0))
-                putExtra("exhibit_hall_id", intent.getIntExtra("exhibit_hall_id", -1))
-                putExtra("exhibit_museum_id", intent.getIntExtra("exhibit_museum_id", -1))
-            }
-            startActivity(intent)*/
             val intent = Intent(this, EditExhibitActivity::class.java)
             intent.putExtra("exhibit_id", currentExhibitId)
             editLauncher.launch(intent)
         }
 
-        // 🗑️ Удаление с подтверждением
         binding.btnDelete.setOnClickListener {
-            // 🔥 Проверка авторизации
+
             if (!AuthManager.isAuthenticated()) {
                 showToast("Для удаления необходимо войти в систему")
                 return@setOnClickListener
@@ -113,7 +97,8 @@ class ExhibitDetailActivity : AppCompatActivity() {
 
     private fun observeViewModel() {
         lifecycleScope.launch {
-            viewModel.uiState.collect { state ->
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
                 when (state) {
                     is ExhibitState.ExhibitDetailsLoaded -> {
                         binding.progressBar.visibility = View.GONE
@@ -132,9 +117,11 @@ class ExhibitDetailActivity : AppCompatActivity() {
                     else -> {}
                 }
             }
+            }
         }
         lifecycleScope.launch {
-            viewModel.navigationEvent.collect { event ->
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.navigationEvent.collect { event ->
                 when (event) {
                     is ExhibitNavigationEvent.ToAuthor -> {
                         val a = event.author
@@ -164,6 +151,7 @@ class ExhibitDetailActivity : AppCompatActivity() {
                     else -> {}
                 }
             }
+            }
         }
     }
 
@@ -185,7 +173,7 @@ class ExhibitDetailActivity : AppCompatActivity() {
             binding.textDetailAuthor.setTextColor(Color.parseColor("#666666"))
             binding.textDetailAuthor.setOnClickListener(null)
         }
-        // Зал
+
         val hallText = exhibit.hallNumber?.let { "Зал №$it" } ?: "Зал не указан"
         if (exhibit.hallId != null) {
             val spannable = SpannableString(hallText)
@@ -201,7 +189,6 @@ class ExhibitDetailActivity : AppCompatActivity() {
             binding.textDetailHall.setOnClickListener(null)
         }
 
-        // Музей
         val museumName = exhibit.museumName
         if (!museumName.isNullOrBlank() && exhibit.museumId != null) {
             val spannable = SpannableString(museumName)
@@ -217,10 +204,7 @@ class ExhibitDetailActivity : AppCompatActivity() {
             binding.textDetailMuseum.setOnClickListener(null)
         }
 
-        android.util.Log.d("IMG_DEBUG", "updateUI: exhibit id=${exhibit.id} imageUrl='${exhibit.imageUrl}'")
-
         if (!exhibit.imageUrl.isNullOrBlank()) {
-            android.util.Log.d("IMG_DEBUG", "Coil: starting load for url='${exhibit.imageUrl}'")
             binding.imageViewExhibit.scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
             binding.imageViewExhibit.load(exhibit.imageUrl) {
                 crossfade(true)
@@ -229,52 +213,22 @@ class ExhibitDetailActivity : AppCompatActivity() {
                 transformations(RoundedCornersTransformation(12f))
                 listener(
                     onStart = {
-                        android.util.Log.d("IMG_DEBUG", "Coil: onStart")
                     },
                     onSuccess = { _, _ ->
-                        android.util.Log.d("IMG_DEBUG", "Coil: onSuccess — image loaded!")
                     },
                     onError = { _, result ->
-                        android.util.Log.e("IMG_DEBUG", "Coil: onError — ${result.throwable}")
                         binding.imageViewExhibit.scaleType = android.widget.ImageView.ScaleType.CENTER
                     }
                 )
             }
         } else {
-            android.util.Log.d("IMG_DEBUG", "imageUrl is null/blank — showing placeholder")
             binding.imageViewExhibit.scaleType = android.widget.ImageView.ScaleType.CENTER
             binding.imageViewExhibit.setImageResource(R.drawable.ic_no_image)
         }
     }
 
-    private fun displayExhibit(exhibit: Exhibit) {
-        // Название
-        binding.textDetailName.text = exhibit.title.ifEmpty { "Без названия" }
-
-        // Описание
-        binding.textDetailDescription.text =
-            exhibit.description.ifEmpty { "Описание отсутствует" }
-
-        // Дата создания
-        binding.textDetailDate.text = "Год создания: ${exhibit.creationYear}"
-
-        // Автор: показываем имя, если есть, иначе ID
-        val authorText = when {
-            !exhibit.authorName.isNullOrBlank() -> exhibit.authorName
-            else -> "Автор не указан"
-        }
-        binding.textDetailAuthor.text = authorText
-
-        // Музей: показываем название, если есть, иначе ID
-        val museumText = when {
-            !exhibit.museumName.isNullOrBlank() -> exhibit.museumName
-            else -> "Музей не указан"
-        }
-        binding.textDetailMuseum.text = museumText
-    }
-
     private fun confirmAndDeleteExhibit() {
-        // Простое подтверждение удаления
+
         AlertDialog.Builder(this)
             .setTitle("Подтверждение")
             .setMessage("Вы действительно хотите удалить этот экспонат ?")

@@ -33,4 +33,8 @@ sealed class ExhibitEvent {
     data class FetchAuthorForNav(val authorId: Int) : ExhibitEvent()
     data class FetchMuseumForNav(val museumId: Int) : ExhibitEvent()
     data class FetchHallForNav(val hallId: Int) : ExhibitEvent()
+
+    object LoadSpinnerData : ExhibitEvent()
+    data class LoadEditFormData(val exhibitId: Int) : ExhibitEvent()
+    data class LoadHallsForMuseum(val museumId: Int) : ExhibitEvent()
 }

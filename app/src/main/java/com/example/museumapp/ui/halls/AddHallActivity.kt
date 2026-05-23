@@ -1,12 +1,15 @@
 package com.example.museumapp.ui.halls
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.museumapp.MuseumApp
 import com.example.museumapp.data.auth.AuthManager
 import com.example.museumapp.data.repository.MuseumSpinnerItem
@@ -14,12 +17,13 @@ import com.example.museumapp.databinding.ActivityAddHallBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import com.example.museumapp.ui.main.MainActivity
 
 class AddHallActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityAddHallBinding
     private val viewModel: HallViewModel by viewModels {
-        HallViewModelFactory((application as MuseumApp).hallRepository, (application as MuseumApp).exhibitRepository, (application as MuseumApp).museumRepository)
+        HallViewModelFactory((application as MuseumApp).hallRepository, (application as MuseumApp).museumRepository)
     }
 
     private var museumsList = listOf<MuseumSpinnerItem>()
@@ -31,6 +35,11 @@ class AddHallActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         binding.btnBack.setOnClickListener { finish() }
+        binding.btnHome.setOnClickListener {
+            val intent = Intent(this, MainActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            startActivity(intent)
+        }
         loadMuseums()
         setupListeners()
         observeViewModel()
@@ -92,7 +101,8 @@ class AddHallActivity : AppCompatActivity() {
 
     private fun observeViewModel() {
         lifecycleScope.launch {
-            viewModel.uiState.collect { state ->
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
                 when (state) {
                     is HallState.Loading -> setLoading(true)
                     is HallState.HallAdded -> {
@@ -106,6 +116,7 @@ class AddHallActivity : AppCompatActivity() {
                     }
                     else -> {}
                 }
+            }
             }
         }
     }

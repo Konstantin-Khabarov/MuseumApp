@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.museumapp.data.repository.HallRepository
 import com.example.museumapp.data.repository.MuseumRepository
+import com.example.museumapp.util.parseError
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,7 +18,6 @@ class MuseumViewModel(
     private val _uiState = MutableStateFlow<MuseumState>(MuseumState.Idle)
     val uiState: StateFlow<MuseumState> = _uiState.asStateFlow()
 
-    // Текущие значения поиска
     private var currentName = ""
     private var currentCity = ""
 
@@ -59,7 +59,7 @@ class MuseumViewModel(
                 val halls = hallRepository.getHallsByMuseum(museumId)
                 _uiState.value = MuseumState.MuseumHallsLoaded(halls)
             } catch (e: Exception) {
-                _uiState.value = MuseumState.Error("Ошибка загрузки залов: ${e.message}")
+                _uiState.value = MuseumState.Error(parseError(e))
             }
         }
     }
@@ -76,7 +76,7 @@ class MuseumViewModel(
             ).onSuccess {
                 _uiState.value = MuseumState.MuseumAdded
             }.onFailure { e ->
-                _uiState.value = MuseumState.Error("Ошибка: ${e.message}")
+                _uiState.value = MuseumState.Error(parseError(e))
             }
         }
     }
@@ -94,7 +94,7 @@ class MuseumViewModel(
             ).onSuccess {
                 _uiState.value = MuseumState.MuseumUpdated
             }.onFailure { e ->
-                _uiState.value = MuseumState.Error("Ошибка: ${e.message}")
+                _uiState.value = MuseumState.Error(parseError(e))
             }
         }
     }
@@ -104,7 +104,7 @@ class MuseumViewModel(
             _uiState.value = MuseumState.Loading
             museumRepository.deleteMuseum(museumId)
                 .onSuccess { _uiState.value = MuseumState.MuseumDeleted }
-                .onFailure { e -> _uiState.value = MuseumState.Error("Ошибка удаления: ${e.message}") }
+                .onFailure { e -> _uiState.value = MuseumState.Error(parseError(e)) }
         }
     }
 
@@ -114,7 +114,7 @@ class MuseumViewModel(
                 val museums = museumRepository.getAllMuseums()
                 _uiState.value = MuseumState.Success(museums)
             } catch (e: Exception) {
-                _uiState.value = MuseumState.Error("Ошибка загрузки: ${e.message}")
+                _uiState.value = MuseumState.Error(parseError(e))
             }
         }
     }
@@ -136,7 +136,7 @@ class MuseumViewModel(
                     _uiState.value = MuseumState.Success(museums)
                 }
             } catch (e: Exception) {
-                _uiState.value = MuseumState.Error("Ошибка поиска: ${e.message}")
+                _uiState.value = MuseumState.Error(parseError(e))
             }
         }
     }

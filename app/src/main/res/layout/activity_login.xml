@@ -12,7 +12,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Вход в систему"
+        android:text="@string/textRegistration"
         android:textSize="28sp"
         android:textStyle="bold"
         android:textColor="#2D3436"
@@ -23,7 +23,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-        android:hint="Email">
+        android:hint="@string/hint_email">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/editTextEmail"
@@ -39,7 +39,7 @@
         android:layout_height="wrap_content"
         android:layout_marginBottom="24dp"
         style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
-        android:hint="Пароль"
+        android:hint="@string/hintPassword"
         app:passwordToggleEnabled="true">
 
         <com.google.android.material.textfield.TextInputEditText
@@ -53,7 +53,7 @@
         android:id="@+id/btnLogin"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Войти"
+        android:text="@string/btnConfirm"
         android:backgroundTint="#3F51B5"
         android:textColor="@android:color/white"
         android:textSize="20sp" />

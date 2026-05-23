@@ -1,6 +1,5 @@
 package com.example.museumapp.data.repository
 
-import android.util.Log
 import com.example.museumapp.data.auth.AuthManager
 import com.example.museumapp.data.model.Museum
 
@@ -11,7 +10,7 @@ class MuseumRepository {
     suspend fun getAllMuseums(): List<Museum> {
         val headers = SupabaseClient.getHeaders()
         val response = api.getAllMuseums(headers["apikey"]!!, headers["Authorization"]!!)
-        //println("DEBUG: Supabase response = $response")
+
         return response
     }
 
@@ -46,7 +45,7 @@ class MuseumRepository {
     ): Result<Unit> {
         return try {
             val headers = AuthManager.getApiHeaders()
-            api.addMuseumRpc(
+            val response = api.addMuseumRpc(
                 apiKey = headers["apikey"]!!,
                 token = headers["Authorization"]!!,
                 params = AddMuseumParams(
@@ -57,9 +56,12 @@ class MuseumRepository {
                     p_website = website
                 )
             )
+            if (!response.isSuccessful) {
+                val errorBody = response.errorBody()?.string()
+                return Result.failure(Exception("HTTP ${response.code()}: $errorBody"))
+            }
             Result.success(Unit)
         } catch (e: Exception) {
-            Log.e("MuseumRepository", "Add exception: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -88,12 +90,10 @@ class MuseumRepository {
             )
             if (!response.isSuccessful) {
                 val err = response.errorBody()?.string()
-                Log.e("MuseumRepository", "Update error: $err")
                 return Result.failure(Exception("HTTP ${response.code()}: $err"))
             }
             Result.success(Unit)
         } catch (e: Exception) {
-            Log.e("MuseumRepository", "Update exception: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -108,12 +108,10 @@ class MuseumRepository {
             )
             if (!response.isSuccessful) {
                 val err = response.errorBody()?.string()
-                Log.e("MuseumRepository", "Delete error: $err")
                 return Result.failure(Exception("HTTP ${response.code()}: $err"))
             }
             Result.success(Unit)
         } catch (e: Exception) {
-            Log.e("MuseumRepository", "Delete exception: ${e.message}", e)
             Result.failure(e)
         }
     }

@@ -9,7 +9,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.museumapp.MuseumApp
 import com.example.museumapp.data.auth.AuthManager
@@ -18,6 +20,7 @@ import com.example.museumapp.databinding.ActivityMuseumDetailBinding
 import com.example.museumapp.ui.halls.HallAdapter
 import com.example.museumapp.ui.halls.HallDetailActivity
 import kotlinx.coroutines.launch
+import com.example.museumapp.ui.main.MainActivity
 
 class MuseumDetailActivity : AppCompatActivity() {
 
@@ -44,6 +47,11 @@ class MuseumDetailActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         binding.btnBack.setOnClickListener { finish() }
+        binding.btnHome.setOnClickListener {
+            val intent = Intent(this, MainActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            startActivity(intent)
+        }
 
         currentMuseum = Museum(
             id = intent.getIntExtra("museum_id", -1),
@@ -99,7 +107,8 @@ class MuseumDetailActivity : AppCompatActivity() {
 
     private fun observeViewModel() {
         lifecycleScope.launch {
-            viewModel.uiState.collect { state ->
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
                 when (state) {
                     is MuseumState.Loading -> setLoading(true)
                     is MuseumState.MuseumDeleted -> {
@@ -119,6 +128,7 @@ class MuseumDetailActivity : AppCompatActivity() {
                     }
                     else -> setLoading(false)
                 }
+            }
             }
         }
     }

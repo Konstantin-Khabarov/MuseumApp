@@ -7,7 +7,9 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.museumapp.MuseumApp
@@ -18,12 +20,12 @@ import com.example.museumapp.databinding.ActivityExhibitManagementBinding
 import com.example.museumapp.ui.authors.AuthorManagementActivity
 import com.example.museumapp.ui.museums.MuseumManagementActivity
 import kotlinx.coroutines.launch
+import com.example.museumapp.ui.main.MainActivity
 
 class ExhibitManagementActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityExhibitManagementBinding
     private lateinit var exhibitAdapter: ExhibitAdapter
-    private var _uiStateWasNotIdleBefore = false
 
     private val viewModel: ExhibitViewModel by viewModels {
         ExhibitViewModelFactory((application as MuseumApp).exhibitRepository, (application as MuseumApp).authorRepository, (application as MuseumApp).museumRepository, (application as MuseumApp).hallRepository)
@@ -58,14 +60,10 @@ class ExhibitManagementActivity : AppCompatActivity() {
     private fun setLoading(isLoading: Boolean) {
         binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
 
-        // Блокируем кнопки во время загрузки
-        //binding.btnSearch.isEnabled = !isLoading
-        //binding.btnReset.isEnabled = !isLoading
-        //binding.fabAdd.isEnabled = !isLoading
     }
 
     private fun setupUI() {
-        // Восстановление предыдущих значений поиска
+
         val (title, authorName, museumName) = viewModel.getCurrentSearchValues()
         binding.editTextExhibitName.setText(title)
         binding.editTextAuthorName.setText(authorName)
@@ -80,26 +78,22 @@ class ExhibitManagementActivity : AppCompatActivity() {
                 putExtra("exhibit_description", exhibit.description)
                 putExtra("exhibit_creation_year", exhibit.creationYear)
 
-                // ID (на всякий случай)
                 putExtra("exhibit_author_id", exhibit.authorId)
                 putExtra("exhibit_museum_id", exhibit.museumId)
 
                 putExtra("exhibit_author_name", exhibit.authorName)
                 putExtra("exhibit_museum_name", exhibit.museumName)
 
-                //putExtra("exhibit_image_url", exhibit.imageUrl)
             }
             detailLauncher.launch(intent)
         }
         binding.recyclerViewExhibits.adapter = exhibitAdapter
         binding.recyclerViewExhibits.layoutManager = LinearLayoutManager(this)
 
-        // Добавляем слушатель скролла для пагинации
         binding.recyclerViewExhibits.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
 
-                // Если доскроллили до конца и можно грузить ещё
                 if (!recyclerView.canScrollVertically(1) && viewModel.canLoadMore()) {
                     viewModel.loadNextPage()
                 }
@@ -109,27 +103,24 @@ class ExhibitManagementActivity : AppCompatActivity() {
 
     private fun setupObservers() {
         lifecycleScope.launch {
-            viewModel.uiState.collect { state ->
-                _uiStateWasNotIdleBefore = state !is ExhibitState.Idle
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
                 handleState(state)
+            }
             }
         }
         lifecycleScope.launch {
-            viewModel.navigationEvent.collect { event ->
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.navigationEvent.collect { event ->
                 if (event is ExhibitNavigationEvent.ToAddExhibit) navigateToAddExhibit()
+            }
             }
         }
     }
 
     private fun handleState(state: ExhibitState) {
         when (state) {
-            is ExhibitState.Idle -> {
-                // 🔥 Показываем загрузку при переходе в Idle перед загрузкой данных
-                // Но только если это не начальный запуск
-                if (_uiStateWasNotIdleBefore) {
-                    setLoading(true)
-                }
-            }
+            is ExhibitState.Idle -> {}
             is ExhibitState.Loading -> {
                 setLoading(true)
             }
@@ -153,12 +144,16 @@ class ExhibitManagementActivity : AppCompatActivity() {
     }
 
     private fun setupListeners() {
-        // Кнопка назад
+
         binding.btnBackArrow.setOnClickListener {
             viewModel.onEvent(ExhibitEvent.NavigateBack)
         }
+        binding.btnHome.setOnClickListener {
+            val intent = Intent(this, MainActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            startActivity(intent)
+        }
 
-        // Кнопка поиска
         binding.btnSearch.setOnClickListener {
             hideKeyboard()
             val title = binding.editTextExhibitName.text.toString()
@@ -174,7 +169,6 @@ class ExhibitManagementActivity : AppCompatActivity() {
             }
         }
 
-        // Кнопка сброса
         binding.btnReset.setOnClickListener {
             binding.editTextExhibitName.setText("")
             binding.editTextAuthorName.setText("")
@@ -184,7 +178,6 @@ class ExhibitManagementActivity : AppCompatActivity() {
             viewModel.onEvent(ExhibitEvent.ResetSearch)
         }
 
-        // Кнопка добавления нового экспоната
         binding.fabAdd.setOnClickListener {
             if (AuthManager.isAuthenticated()) {
                 viewModel.onEvent(ExhibitEvent.NavigateToAddExhibit)

@@ -15,7 +15,7 @@ class AuthViewModel : ViewModel() {
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
 
     init {
-        // 🔥 Наблюдаем за глобальным состоянием авторизации
+
         viewModelScope.launch {
             AuthManager.authState.collect { authState ->
                 _uiState.value = when (authState) {
@@ -27,18 +27,11 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    // 🔥 Проверка: можно ли выполнять запись?
-    fun canWrite(): Boolean {
-        return AuthManager.isAuthenticated()
-    }
-
-    // 🔥 Выход из системы
     suspend fun logout(): Result<Unit> {
         return AuthManager.logout()
     }
 }
 
-// 🔥 Состояния для UI
 sealed class AuthUiState {
     object Checking : AuthUiState()
     object Authenticated : AuthUiState()

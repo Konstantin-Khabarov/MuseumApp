@@ -7,19 +7,19 @@
     android:layout_height="match_parent"
     android:background="#FAFAFA"
     android:orientation="vertical"
-    android:padding="16dp"
     tools:context=".ui.exhibits.AddExhibitActivity">
 
-    <!-- Верхняя панель с кнопкой назад -->
+    
     <LinearLayout
         android:id="@+id/topBar"
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
+        android:layout_height="84dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="@android:color/white"
-        android:layout_marginBottom="16dp"
-        android:elevation="4dp">
+        android:paddingTop="28dp"
+        android:background="@drawable/topbar_background"
+        android:layout_marginBottom="10dp"
+        android:elevation="2dp">
 
         <ImageButton
             android:id="@+id/btnBack"
@@ -27,22 +27,32 @@
             android:layout_height="48dp"
             android:src="@drawable/ic_arrow_back"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Назад"
-            app:tint="#3F51B5" />
+            android:contentDescription="@string/cd_back"
+            app:tint="@android:color/white" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Добавить экспонат"
-            android:textColor="#2D3436"
+            android:text="@string/title_add_exhibit"
+            android:textColor="@android:color/white"
             android:textSize="20sp"
             android:textStyle="bold"
             android:paddingStart="8dp" />
 
+    
+        <ImageButton
+            android:id="@+id/btnHome"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_home"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/cd_home"
+            app:tint="@android:color/white" />
+
     </LinearLayout>
 
-    <!-- Форма в карточке -->
+    
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -56,7 +66,7 @@
             android:orientation="vertical"
             android:padding="20dp">
 
-            <!-- Название (обязательно) -->
+            
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -68,13 +78,13 @@
                     android:id="@+id/editTextTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Название экспоната"
+                    android:hint="@string/hint_exhibit_title"
                     android:inputType="text"
                     android:maxLines="1" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Описание -->
+            
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -85,14 +95,14 @@
                     android:id="@+id/editTextDescription"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Описание"
+                    android:hint="@string/label_description"
                     android:inputType="textMultiLine"
                     android:minLines="2"
                     android:gravity="top|start" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Год создания -->
+            
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -103,13 +113,13 @@
                     android:id="@+id/editTextYear"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Год создания"
+                    android:hint="@string/hint_creation_year"
                     android:inputType="number"
                     android:maxLines="1" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- Ссылка на фото -->
+            
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -120,7 +130,7 @@
                     android:id="@+id/editTextImageUrl"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Ссылка на фото (необязательно)"
+                    android:hint="@string/hint_image_url"
                     android:inputType="textUri"
                     android:maxLines="1" />
 
@@ -129,7 +139,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Музей *"
+                android:text="@string/label_museum_required"
                 android:textColor="#2D3436"
                 android:textSize="14sp"
                 android:textStyle="bold"
@@ -143,12 +153,11 @@
                 android:background="@android:drawable/btn_dropdown"
                 android:spinnerMode="dropdown" />
 
-
             <TextView
                 android:id="@+id/textHallLabel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Зал (опционально)"
+                android:text="@string/label_hall_optional"
                 android:textColor="#2D3436"
                 android:textSize="14sp"
                 android:textStyle="bold"
@@ -164,11 +173,11 @@
                 android:spinnerMode="dropdown"
                 android:visibility="gone" />
 
-            <!-- Выбор автора (Spinner) -->
+            
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Автор"
+                android:text="@string/title_author"
                 android:textColor="#2D3436"
                 android:textSize="14sp"
                 android:textStyle="bold"
@@ -182,12 +191,12 @@
                 android:background="@android:drawable/btn_dropdown"
                 android:spinnerMode="dropdown" />
 
-            <!-- Кнопка сохранения -->
+            
             <Button
                 android:id="@+id/btnSave"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Сохранить"
+                android:text="@string/btn_save"
                 android:backgroundTint="#3F51B5"
                 android:textColor="@android:color/white"
                 android:textSize="16sp" />
@@ -196,7 +205,7 @@
 
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- ProgressBar для загрузки -->
+    
     <ProgressBar
         android:id="@+id/progressBar"
         style="?android:attr/progressBarStyleLarge"

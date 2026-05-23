@@ -20,7 +20,6 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // 🔥 Если уже авторизован — сразу идём в приложение
         if (AuthManager.isAuthenticated()) {
             navigateToMain()
             return
@@ -75,9 +74,9 @@ class LoginActivity : AppCompatActivity() {
                     navigateToMain()
                 }
                 .onFailure { error ->
-                    // 🔥 Упрощённая обработка ошибок — без специфичных исключений
+
                     val message = when {
-                        // Проверяем по тексту сообщения (надёжнее, чем по типу)
+
                         error.message?.contains("Invalid login credentials", ignoreCase = true) == true -> {
                             "Неверный email или пароль"
                         }
@@ -95,8 +94,6 @@ class LoginActivity : AppCompatActivity() {
                     }
                     showToast(message)
 
-                    // 🔥 Для отладки: выводим полную ошибку в Logcat
-                    android.util.Log.e("LoginActivity", "Auth error: ${error::class.simpleName}", error)
                 }
         }
     }

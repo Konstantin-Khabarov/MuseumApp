@@ -1,6 +1,5 @@
 package com.example.museumapp.data.repository
 
-import android.util.Log
 import com.example.museumapp.data.auth.AuthManager
 import com.example.museumapp.data.model.Author
 
@@ -17,7 +16,7 @@ class AuthorRepository {
         name: String? = null
     ): List<Author> {
         val allAuthors = getAllAuthors()
-        // Фильтруем локально
+
         return allAuthors.filter { author ->
             (name.isNullOrEmpty() || author.name.contains(name, ignoreCase = true))
         }
@@ -36,12 +35,24 @@ class AuthorRepository {
     suspend fun insertAuthor(author: Author): Result<Author> {
         return try {
             val headers = AuthManager.getApiHeaders()
-            val response = api.insertCreator(
+            val request = AuthorInsertRequest(
+                name = author.name,
+                biography = author.biography,
+                birth_date = author.birthDate,
+                death_date = author.deathDate,
+                photo_url = author.photoUrl
+            )
+            val response = api.insertCreatorRaw(
                 apiKey = headers["apikey"]!!,
                 token = headers["Authorization"]!!,
-                creator = author
+                creator = request
             )
-            Result.success(if (response.isNotEmpty()) response[0] else author)
+            if (!response.isSuccessful) {
+                val errorBody = response.errorBody()?.string()
+                return Result.failure(Exception("HTTP ${response.code()}: $errorBody"))
+            }
+            val body = response.body()
+            Result.success(if (!body.isNullOrEmpty()) body[0] else author)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -71,7 +82,6 @@ class AuthorRepository {
             )
             Result.success(updated)
         } catch (e: Exception) {
-            Log.e("AuthorRepository", "Update error: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -79,23 +89,17 @@ class AuthorRepository {
     suspend fun deleteAuthor(id: Int): Result<Unit> {
         return try {
             val headers = AuthManager.getApiHeaders()
-            Log.d("DELETE_AUTHOR", "Starting delete for id=$id")
-            Log.d("DELETE_AUTHOR", "apikey present=${headers["apikey"] != null}, token=${headers["Authorization"]?.take(30)}")
             val response = api.deleteCreatorRpc(
                 apiKey = headers["apikey"]!!,
                 token = headers["Authorization"]!!,
                 params = DeleteCreatorParams(p_creator_id = id)
             )
-            Log.d("DELETE_AUTHOR", "Response code=${response.code()}, successful=${response.isSuccessful}")
             if (!response.isSuccessful) {
                 val errorBody = response.errorBody()?.string()
-                Log.e("DELETE_AUTHOR", "Error body: $errorBody")
                 return Result.failure(Exception("HTTP ${response.code()}: $errorBody"))
             }
-            Log.d("DELETE_AUTHOR", "Delete successful")
             Result.success(Unit)
         } catch (e: Exception) {
-            Log.e("DELETE_AUTHOR", "Exception: ${e.javaClass.simpleName}: ${e.message}", e)
             Result.failure(e)
         }
     }

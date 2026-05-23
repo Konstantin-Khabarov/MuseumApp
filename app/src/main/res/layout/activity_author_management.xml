@@ -9,6 +9,50 @@
     android:orientation="vertical"
     tools:context=".ui.authors.AuthorManagementActivity">
 
+    <LinearLayout
+        android:id="@+id/topBar"
+        android:layout_width="match_parent"
+        android:layout_height="84dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingTop="28dp"
+        android:background="@drawable/topbar_background"
+        android:layout_marginBottom="10dp"
+        android:elevation="2dp">
+
+        <ImageButton
+            android:id="@+id/btnBackArrow"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:scaleType="center"
+            android:src="@drawable/ic_arrow_back"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="@android:color/white" />
+
+        <TextView
+            android:id="@+id/titleText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="5"
+            android:text="@string/title_author_management"
+            android:textColor="@android:color/white"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:paddingEnd="16dp" />
+
+    
+        <ImageButton
+            android:id="@+id/btnHome"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_home"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/cd_home"
+            app:tint="@android:color/white" />
+
+    </LinearLayout>
+
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -20,40 +64,7 @@
             android:orientation="vertical"
             android:padding="10dp">
 
-            <LinearLayout
-                android:id="@+id/topBar"
-                android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:background="@android:color/white"
-                android:layout_marginBottom="10dp"
-                android:elevation="2dp">
-
-                <ImageButton
-                    android:id="@+id/btnBackArrow"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:scaleType="center"
-                    android:src="@drawable/ic_arrow_back"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    app:tint="#3F51B5" />
-
-                <TextView
-                    android:id="@+id/titleText"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="5"
-                    android:text="Управление авторами"
-                    android:textColor="#2D3436"
-                    android:textSize="24sp"
-                    android:textStyle="bold"
-                    android:paddingStart="8dp"
-                    android:paddingEnd="16dp" />
-
-            </LinearLayout>
-
+            
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -72,7 +83,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="4dp"
-                        android:text="Поиск авторов"
+                        android:text="@string/label_search_authors"
                         android:textColor="#2D3436"
                         android:textSize="15sp"
                         android:textStyle="bold" />
@@ -86,7 +97,7 @@
                             android:id="@+id/editTextAuthorName"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:hint="Имя автора"
+                            android:hint="@string/label_author_name"
                             android:paddingTop="6dp"
                             android:paddingBottom="6dp" />
                     </com.google.android.material.textfield.TextInputLayout>
@@ -103,7 +114,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:layout_marginEnd="6dp"
-                            android:text="Найти"
+                            android:text="@string/btn_search"
                             app:icon="@drawable/search" />
 
                         <com.google.android.material.button.MaterialButton
@@ -112,7 +123,7 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Сбросить"
+                            android:text="@string/btn_reset"
                             app:icon="@drawable/broom" />
 
                     </LinearLayout>
@@ -126,7 +137,7 @@
                 android:layout_marginBottom="4dp"
                 android:layout_marginTop="4dp"
                 android:layout_marginStart="4dp"
-                android:text="Результаты поиска"
+                android:text="@string/label_search_results"
                 android:textColor="#2D3436"
                 android:textSize="15sp"
                 android:textStyle="bold" />
@@ -158,7 +169,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
             android:layout_margin="16dp"
-            android:text="Добавить"
+            android:text="@string/btn_add"
             app:icon="@drawable/plus"
             app:backgroundTint="#3F51B5"
             android:textColor="@android:color/white"
