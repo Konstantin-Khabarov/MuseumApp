@@ -4,14 +4,14 @@
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
         <!-- Основные цвета -->
-        <item name="colorPrimary">#3F51B5</item>
-        <item name="colorPrimaryVariant">#283593</item>
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryVariant">@color/colorPrimaryVariant</item>
         <item name="colorOnPrimary">@color/white</item>
 
-        <item name="android:textColorPrimary">#212121</item>
-        <item name="android:textColorSecondary">#757575</item>
-        <item name="android:editTextColor">#212121</item>
-        <item name="colorOnSurface">#212121</item>
+        <item name="android:textColorPrimary">@color/colorTextPrimary</item>
+        <item name="android:textColorSecondary">@color/colorTextSecondary</item>
+        <item name="android:editTextColor">@color/colorTextPrimary</item>
+        <item name="colorOnSurface">@color/colorTextPrimary</item>
     </style>
 
     <style name="Theme.MuseumApp" parent="Base.Theme.MuseumApp" />

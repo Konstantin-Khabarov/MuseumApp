@@ -18,7 +18,8 @@
         android:usesCleartextTraffic="true">
         <activity
             android:name=".ui.main.MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -26,70 +27,87 @@
         </activity>
         <activity
             android:name=".ui.auth.LoginActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".ui.exhibits.ExhibitManagementActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".ui.museums.MuseumManagementActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".ui.authors.AuthorManagementActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".ui.authors.AuthorDetailActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".ui.exhibits.ExhibitDetailActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".ui.museums.MuseumDetailActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".ui.exhibits.AddExhibitActivity"
             android:exported="false"
             android:label="Добавить экспонат"
+            android:screenOrientation="portrait"
             android:parentActivityName=".ui.exhibits.ExhibitManagementActivity" />
         <activity
             android:name=".ui.exhibits.EditExhibitActivity"
             android:exported="false"
             android:label="Редактировать экспонат"
+            android:screenOrientation="portrait"
             android:parentActivityName=".ui.exhibits.ExhibitDetailActivity" />
         <activity
             android:name=".ui.authors.AddAuthorActivity"
             android:exported="false"
             android:label="Добавить автора"
+            android:screenOrientation="portrait"
             android:parentActivityName=".ui.authors.AuthorManagementActivity" />
         <activity
             android:name=".ui.authors.EditAuthorActivity"
             android:exported="false"
             android:label="Редактировать автора"
+            android:screenOrientation="portrait"
             android:parentActivityName=".ui.authors.AuthorDetailActivity" />
         <activity
             android:name=".ui.halls.HallManagementActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".ui.halls.HallDetailActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".ui.halls.EditHallActivity"
             android:exported="false"
             android:label="Редактировать зал"
+            android:screenOrientation="portrait"
             android:parentActivityName=".ui.halls.HallDetailActivity" />
         <activity
             android:name=".ui.halls.AddHallActivity"
             android:exported="false"
             android:label="Добавить зал"
+            android:screenOrientation="portrait"
             android:parentActivityName=".ui.halls.HallManagementActivity" />
         <activity
             android:name=".ui.museums.AddMuseumActivity"
             android:exported="false"
             android:label="Добавить музей"
+            android:screenOrientation="portrait"
             android:parentActivityName=".ui.museums.MuseumManagementActivity" />
         <activity
             android:name=".ui.museums.EditMuseumActivity"
             android:exported="false"
             android:label="Редактировать музей"
+            android:screenOrientation="portrait"
             android:parentActivityName=".ui.museums.MuseumDetailActivity" />
     </application>
 
